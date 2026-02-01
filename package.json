@@ -1,0 +1,20 @@
+{
+  "name": "workshop-booking-api",
+  "version": "1.0.0",
+  "description": "Workshop Booking API Proxy for GHL",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "bun build --compile --minify ./src/index.ts --outfile ./dist/workshop-api",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gohighlevel/api-client": "^2.2.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.9.3"
+  }
+}

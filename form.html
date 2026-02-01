@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Workshop Booking</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #fafafa;
+      padding: 24px 0;
+    }
+
+    .form-container {
+      max-width: 480px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, .08);
+      padding: 30px 35px;
+    }
+
+    .form-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .progress-container {
+      margin-bottom: 25px;
+    }
+
+    .progress-steps {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .step-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #e0e0e0;
+      color: #999;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .step-circle.active,
+    .step-circle.completed {
+      background: #27ae60;
+      color: #fff;
+    }
+
+    .step-connector {
+      width: 60px;
+      height: 3px;
+      background: #e0e0e0;
+      margin: 0 12px;
+      transition: background-color 0.2s;
+    }
+
+    .step-connector.completed {
+      background: #27ae60;
+    }
+
+    .form-step {
+      display: none;
+    }
+
+    .form-step.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .required {
+      color: #e74c3c;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+      color: #333;
+      transition: border-color 0.2s ease, opacity 0.2s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #4a90d9;
+    }
+
+    .form-control:disabled {
+      background: #f7f7f7;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    .form-control.loading {
+      opacity: 0.6;
+    }
+
+    select.form-control {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 35px;
+    }
+
+    select.form-control:disabled {
+      cursor: not-allowed;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #444;
+      margin: 20px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .section-title:first-child {
+      margin-top: 0;
+    }
+
+    .field-status {
+      font-size: 12px;
+      margin-top: 5px;
+      min-height: 18px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .field-status.loading {
+      color: #888;
+      font-style: italic;
+    }
+
+    .field-status.error {
+      color: #e74c3c;
+    }
+
+    .field-status:empty {
+      display: none;
+    }
+
+    .retry-btn {
+      background: none;
+      border: none;
+      color: #3498db;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0;
+      margin-left: 4px;
+    }
+
+    .retry-btn:hover {
+      color: #2980b9;
+    }
+
+    .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid #ddd;
+      border-top-color: #888;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 25px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 13px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, opacity 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #555;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e5e5;
+    }
+
+    .btn-primary {
+      background: #3498db;
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #2980b9;
+    }
+
+    .btn-primary:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+
+    .btn .spinner {
+      border-color: rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+    }
+
+    .submit-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      z-index: 1000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .submit-overlay.active {
+      display: flex;
+    }
+
+    .submit-overlay .spinner {
+      width: 40px;
+      height: 40px;
+      border-width: 4px;
+    }
+
+    .submit-overlay .status-text {
+      font-size: 16px;
+      color: #333;
+      font-weight: 500;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .alert.visible {
+      display: block;
+    }
+
+    .alert-error {
+      background: #fdecea;
+      color: #c0392b;
+      border: 1px solid #f5c6cb;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    @media (max-width: 520px) {
+      .form-container {
+        padding: 25px 20px;
+        margin: 0 10px;
+      }
+
+      .form-row {
+        flex-direction: column;
+        gap: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="submit-overlay" id="submitOverlay">
+    <div class="spinner"></div>
+    <div class="status-text">Processing your booking...</div>
+  </div>
+
+  <div class="form-container">
+    <h1 class="form-title">Workshop Booking</h1>
+
+    <div class="alert alert-error" id="alertError"></div>
+    <div class="alert alert-success" id="alertSuccess"></div>
+
+    <div class="progress-container">
+      <div class="progress-steps">
+        <div class="step-circle active" data-step="1">1</div>
+        <div class="step-connector" data-connector="1"></div>
+        <div class="step-circle" data-step="2">2</div>
+      </div>
+    </div>
+
+    <form id="workshopBookingForm" novalidate>
+      <div class="form-step active" data-step-content="1">
+        <div class="form-group">
+          <label for="yearGroup">Year Group <span class="required">*</span></label>
+          <select id="yearGroup" name="yearGroup" class="form-control" required>
+            <option value="">-- Select Year Group --</option>
+            <option value="gcse">GCSE</option>
+            <option value="alevel">A Level</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="subject">Subject <span class="required">*</span></label>
+          <select id="subject" name="subject" class="form-control" disabled required>
+            <option value="">-- Select Subject --</option>
+          </select>
+          <div class="field-status" data-status="subject"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="workshopDate">Workshop Date <span class="required">*</span></label>
+          <select id="workshopDate" name="workshopDate" class="form-control" disabled required>
+            <option value="">-- Select Date --</option>
+          </select>
+          <div class="field-status" data-status="date"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="sessionTime">Session Time <span class="required">*</span></label>
+          <select id="sessionTime" name="sessionTime" class="form-control" disabled required>
+            <option value="">-- Select Time --</option>
+          </select>
+          <div class="field-status" data-status="time"></div>
+        </div>
+
+        <div class="button-group">
+          <button type="button" class="btn btn-primary" id="nextToStep2" disabled>Continue</button>
+        </div>
+      </div>
+
+      <div class="form-step" data-step-content="2">
+        <div class="section-title">Parent/Guardian</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="parentFirstName">First Name <span class="required">*</span></label>
+            <input type="text" id="parentFirstName" name="parentFirstName" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="parentLastName">Last Name <span class="required">*</span></label>
+            <input type="text" id="parentLastName" name="parentLastName" class="form-control" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="parentEmail">Email <span class="required">*</span></label>
+            <input type="email" id="parentEmail" name="parentEmail" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="parentPhone">Phone <span class="required">*</span></label>
+            <input type="tel" id="parentPhone" name="parentPhone" class="form-control" required />
+          </div>
+        </div>
+
+        <div class="section-title">Student</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="studentFirstName">First Name <span class="required">*</span></label>
+            <input type="text" id="studentFirstName" name="studentFirstName" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="studentLastName">Last Name <span class="required">*</span></label>
+            <input type="text" id="studentLastName" name="studentLastName" class="form-control" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="studentEmail">Email <span class="required">*</span></label>
+            <input type="email" id="studentEmail" name="studentEmail" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="studentPhone">Phone <span class="required">*</span></label>
+            <input type="tel" id="studentPhone" name="studentPhone" class="form-control" required />
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button type="button" class="btn btn-secondary" id="backToStep1">Back</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">Pay Now</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ============================================================
+      // CONFIGURATION
+      // ============================================================
+      const API_URL = 'http://localhost:3000/api';
+
+      // ============================================================
+      // STATE
+      // ============================================================
+      const state = {
+        yearGroup: null,
+        subject: null,
+        workshopDate: null,
+        selectedOfferingId: null,
+        offeringsCache: new Map(),
+        currentRequestId: 0
+      };
+
+      // ============================================================
+      // DOM ELEMENTS
+      // ============================================================
+      const $ = (id) => document.getElementById(id);
+      const $q = (sel) => document.querySelector(sel);
+
+      const form = $('workshopBookingForm');
+      const yearGroupEl = $('yearGroup');
+      const subjectEl = $('subject');
+      const workshopDateEl = $('workshopDate');
+      const sessionTimeEl = $('sessionTime');
+      const nextBtn = $('nextToStep2');
+      const backBtn = $('backToStep1');
+      const submitBtn = $('submitBtn');
+      const submitOverlay = $('submitOverlay');
+      const alertError = $('alertError');
+      const alertSuccess = $('alertSuccess');
+
+      // ============================================================
+      // UTILITIES
+      // ============================================================
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text ?? '';
+        return div.innerHTML;
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr || '';
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const date = new Date(y, m - 1, d);
+        return date.toLocaleDateString('en-GB', {
+          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+        });
+      }
+
+      // ============================================================
+      // UI HELPERS
+      // ============================================================
+      function setFieldStatus(type, status, message, retryFn) {
+        const el = $q(`[data-status="${type}"]`);
+        if (!el) return;
+
+        el.className = 'field-status';
+        el.innerHTML = '';
+
+        if (status === 'loading') {
+          el.classList.add('loading');
+          el.innerHTML = `<span class="spinner"></span><span>${escapeHtml(message)}</span>`;
+        } else if (status === 'error') {
+          el.classList.add('error');
+          el.innerHTML = escapeHtml(message);
+          if (retryFn) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'retry-btn';
+            btn.textContent = 'Retry';
+            btn.onclick = retryFn;
+            el.appendChild(btn);
+          }
+        }
+      }
+
+      function clearFieldStatus(type) {
+        const el = $q(`[data-status="${type}"]`);
+        if (el) {
+          el.className = 'field-status';
+          el.innerHTML = '';
+        }
+      }
+
+      function setSelectOptions(selectEl, options, placeholder) {
+        selectEl.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>`;
+        for (const opt of options) {
+          selectEl.insertAdjacentHTML('beforeend',
+            `<option value="${escapeHtml(opt.value)}"${opt.disabled ? ' disabled style="color:#999;"' : ''}>${escapeHtml(opt.label)}</option>`
+          );
+        }
+      }
+
+      function updateContinueButton() {
+        nextBtn.disabled = !(state.yearGroup && state.subject && state.workshopDate && state.selectedOfferingId);
+      }
+
+      function goToStep(step) {
+        $q('[data-step-content="1"]').classList.toggle('active', step === 1);
+        $q('[data-step-content="2"]').classList.toggle('active', step === 2);
+        $q('[data-step="1"]').className = step === 1 ? 'step-circle active' : 'step-circle completed';
+        $q('[data-step="2"]').className = step === 2 ? 'step-circle active' : 'step-circle';
+        $q('[data-connector="1"]').classList.toggle('completed', step === 2);
+      }
+
+      function showOverlay() {
+        submitOverlay.classList.add('active');
+      }
+
+      function hideOverlay() {
+        submitOverlay.classList.remove('active');
+      }
+
+      function showAlert(type, message) {
+        alertError.classList.remove('visible');
+        alertSuccess.classList.remove('visible');
+        const el = type === 'error' ? alertError : alertSuccess;
+        el.textContent = message;
+        el.classList.add('visible');
+      }
+
+      function hideAlerts() {
+        alertError.classList.remove('visible');
+        alertSuccess.classList.remove('visible');
+      }
+
+      // ============================================================
+      // RESET FUNCTIONS
+      // ============================================================
+      function resetSubject() {
+        setSelectOptions(subjectEl, [], '-- Select Subject --');
+        subjectEl.disabled = true;
+        state.subject = null;
+        clearFieldStatus('subject');
+        resetDate();
+      }
+
+      function resetDate() {
+        setSelectOptions(workshopDateEl, [], '-- Select Date --');
+        workshopDateEl.disabled = true;
+        state.workshopDate = null;
+        clearFieldStatus('date');
+        resetSession();
+      }
+
+      function resetSession() {
+        setSelectOptions(sessionTimeEl, [], '-- Select Time --');
+        sessionTimeEl.disabled = true;
+        state.selectedOfferingId = null;
+        sessionTimeEl._sessions = [];
+        clearFieldStatus('time');
+        updateContinueButton();
+      }
+
+      // ============================================================
+      // API
+      // ============================================================
+      async function apiRequest(endpoint, options = {}) {
+        const response = await fetch(`${API_URL}${endpoint}`, {
+          ...options,
+          headers: { 'Content-Type': 'application/json', ...options.headers }
+        });
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error?.message || 'Request failed');
+        }
+        return data.data;
+      }
+
+      // ============================================================
+      // DATA LOADING
+      // ============================================================
+      async function loadSubjects(yearGroup) {
+        const requestId = ++state.currentRequestId;
+        resetSubject();
+        subjectEl.classList.add('loading');
+        setFieldStatus('subject', 'loading', 'Loading subjects...');
+
+        try {
+          let offerings = state.offeringsCache.get(yearGroup);
+          if (!offerings) {
+            offerings = await apiRequest(`/offerings?yearGroup=${encodeURIComponent(yearGroup)}`);
+            state.offeringsCache.set(yearGroup, offerings);
+          }
+
+          if (requestId !== state.currentRequestId) return;
+
+          const subjects = [...new Set(offerings.map(o => o.subject).filter(Boolean))].sort();
+
+          if (subjects.length === 0) {
+            setFieldStatus('subject', 'error', 'No subjects available.');
+            return;
+          }
+
+          setSelectOptions(subjectEl, subjects.map(s => ({ value: s, label: s })), '-- Select Subject --');
+          subjectEl.disabled = false;
+          clearFieldStatus('subject');
+        } catch (error) {
+          if (requestId === state.currentRequestId) {
+            setFieldStatus('subject', 'error', 'Failed to load.', () => loadSubjects(yearGroup));
+          }
+        } finally {
+          subjectEl.classList.remove('loading');
+        }
+      }
+
+      function loadDates(yearGroup, subject) {
+        resetDate();
+        const offerings = state.offeringsCache.get(yearGroup) || [];
+        const dates = [...new Set(offerings.filter(o => o.subject === subject).map(o => o.workshopDate).filter(Boolean))].sort();
+
+        if (dates.length === 0) {
+          setFieldStatus('date', 'error', 'No dates available.');
+          return;
+        }
+
+        setSelectOptions(workshopDateEl, dates.map(d => ({ value: d, label: formatDate(d) })), '-- Select Date --');
+        workshopDateEl.disabled = false;
+      }
+
+      function loadSessions(yearGroup, subject, workshopDate) {
+        resetSession();
+        const offerings = state.offeringsCache.get(yearGroup) || [];
+        const sessions = offerings
+          .filter(o => o.subject === subject && o.workshopDate === workshopDate)
+          .sort((a, b) => (a.sessionTime || '').localeCompare(b.sessionTime || ''));
+
+        if (sessions.length === 0) {
+          setFieldStatus('time', 'error', 'No sessions available.');
+          return;
+        }
+
+        const options = sessions.map(o => ({
+          value: o.id,
+          label: `${o.sessionTime}${o.priceLabel ? ` — ${o.priceLabel}` : ''}`
+        }));
+
+        setSelectOptions(sessionTimeEl, options, '-- Select Time --');
+        sessionTimeEl.disabled = false;
+        sessionTimeEl._sessions = sessions;
+      }
+
+      // ============================================================
+      // EVENT HANDLERS
+      // ============================================================
+      yearGroupEl.addEventListener('change', function () {
+        state.yearGroup = this.value || null;
+        state.yearGroup ? loadSubjects(state.yearGroup) : resetSubject();
+      });
+
+      subjectEl.addEventListener('change', function () {
+        state.subject = this.value || null;
+        state.subject ? loadDates(state.yearGroup, state.subject) : resetDate();
+      });
+
+      workshopDateEl.addEventListener('change', function () {
+        state.workshopDate = this.value || null;
+        state.workshopDate ? loadSessions(state.yearGroup, state.subject, state.workshopDate) : resetSession();
+      });
+
+      sessionTimeEl.addEventListener('change', function () {
+        state.selectedOfferingId = this.value || null;
+        updateContinueButton();
+      });
+
+      nextBtn.addEventListener('click', () => goToStep(2));
+      backBtn.addEventListener('click', () => goToStep(1));
+
+      // ============================================================
+      // FORM SUBMISSION
+      // ============================================================
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        if (!this.checkValidity()) {
+          this.reportValidity();
+          return;
+        }
+
+        hideAlerts();
+        submitBtn.disabled = true;
+        showOverlay();
+
+        try {
+          const bookingData = {
+            offeringId: state.selectedOfferingId,
+            parent: {
+              firstName: $('parentFirstName').value.trim(),
+              lastName: $('parentLastName').value.trim(),
+              email: $('parentEmail').value.trim(),
+              phone: $('parentPhone').value.trim()
+            },
+            student: {
+              firstName: $('studentFirstName').value.trim(),
+              lastName: $('studentLastName').value.trim(),
+              email: $('studentEmail').value.trim(),
+              phone: $('studentPhone').value.trim()
+            }
+          };
+
+          const result = await apiRequest('/bookings', {
+            method: 'POST',
+            body: JSON.stringify(bookingData)
+          });
+
+          hideOverlay();
+          showAlert('success', 'Booking created! Redirecting to payment...');
+
+          setTimeout(() => {
+            window.location.href = result.checkoutUrl;
+          }, 500);
+
+        } catch (error) {
+          hideOverlay();
+          showAlert('error', error.message || 'Booking failed. Please try again.');
+          submitBtn.disabled = false;
+        }
+      });
+
+    })();
+  </script>
+</body>
+
+</html>

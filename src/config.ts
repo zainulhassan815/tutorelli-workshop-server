@@ -1,0 +1,47 @@
+function getEnv(key: string, fallback?: string): string {
+  const value = process.env[key] ?? fallback;
+  if (value === undefined) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value;
+}
+
+function getEnvNumber(key: string, fallback: number): number {
+  const value = process.env[key];
+  if (value === undefined) return fallback;
+  const num = parseInt(value, 10);
+  if (isNaN(num)) {
+    throw new Error(`Environment variable ${key} must be a number`);
+  }
+  return num;
+}
+
+export const config = {
+  // Server
+  port: getEnvNumber('PORT', 3000),
+
+  // GHL API
+  ghl: {
+    apiBaseUrl: getEnv('GHL_API_BASE_URL', 'https://services.leadconnectorhq.com'),
+    accessToken: getEnv('GHL_ACCESS_TOKEN'),
+    locationId: getEnv('GHL_LOCATION_ID'),
+  },
+
+  // Schema IDs
+  schemas: {
+    workshopOfferings: getEnv('WORKSHOP_OFFERINGS_SCHEMA'),
+    bookings: getEnv('BOOKINGS_SCHEMA'),
+  },
+
+  // Checkout
+  checkoutBaseUrl: getEnv('CHECKOUT_BASE_URL'),
+
+  // Request settings
+  request: {
+    timeoutMs: 15000,
+    maxRetries: 2,
+    pageLimit: 100,
+  },
+} as const;
+
+export type Config = typeof config;
