@@ -5,6 +5,7 @@ import type {
   Contact,
   Booking,
   CustomField,
+  PaymentStatusUpdate,
 } from './types';
 import { OFFERING_FIELDS, BOOKING_FIELDS, AVAILABILITY, CONTACT_CUSTOM_FIELDS } from './types';
 
@@ -43,7 +44,7 @@ function parseOfferingFromRecord(record: { id: string; properties: Record<string
     price: parsePrice(props[OFFERING_FIELDS.price]),
     priceLabel: String(props[OFFERING_FIELDS.priceLabel] || ''),
     zoomLink: String(props[OFFERING_FIELDS.zoomLink] || ''),
-    productId: String(props[OFFERING_FIELDS.productId] || ''),
+    stripePriceId: String(props[OFFERING_FIELDS.stripePriceId] || ''),
   };
 }
 
@@ -162,6 +163,57 @@ export async function findBookingByStudentAndOffering(
   }
 
   return parseBookingFromRecord(records[0]);
+}
+
+export async function findBookingByBookingId(bookingId: string): Promise<Booking | null> {
+  const response = await ghl.objects.searchObjectRecords(
+    { schemaKey: config.schemas.bookings },
+    {
+      locationId: config.ghl.locationId,
+      page: 1,
+      pageLimit: 1,
+      query: '',
+      filters: [
+        {
+          group: 'AND',
+          filters: [
+            {
+              field: `properties.${BOOKING_FIELDS.id}`,
+              operator: 'eq',
+              value: bookingId,
+            },
+          ],
+        },
+      ],
+    } as any
+  );
+
+  const records = (response.records || []) as unknown as Array<{ id: string; properties: Record<string, unknown> }>;
+  if (records.length === 0) {
+    return null;
+  }
+
+  return parseBookingFromRecord(records[0]);
+}
+
+export async function updateBookingPaymentStatus(
+  recordId: string,
+  update: PaymentStatusUpdate
+): Promise<void> {
+  const properties: Record<string, unknown> = {
+    [BOOKING_FIELDS.paymentStatus]: update.paymentStatus,
+  };
+
+  await ghl.objects.updateObjectRecord(
+    {
+      schemaKey: config.schemas.bookings,
+      id: recordId,
+      locationId: config.ghl.locationId,
+    },
+    {
+      properties,
+    } as any
+  );
 }
 
 function generateBookingId(): string {

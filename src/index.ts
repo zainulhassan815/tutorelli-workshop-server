@@ -6,6 +6,10 @@ import {
   handleNotFound,
   handleMethodNotAllowed,
 } from './handlers';
+import {
+  handleCreateCheckoutSession,
+  handleStripeWebhook,
+} from './stripe-handlers';
 
 function addCorsHeaders(response: Response): Response {
   const headers = new Headers(response.headers);
@@ -50,6 +54,16 @@ async function router(request: Request): Promise<Response> {
 
   if (path === '/api/bookings') {
     if (method === 'POST') return handleCreateBooking(request);
+    return handleMethodNotAllowed();
+  }
+
+  if (path === '/api/checkout/session') {
+    if (method === 'POST') return handleCreateCheckoutSession(request);
+    return handleMethodNotAllowed();
+  }
+
+  if (path === '/api/webhooks/stripe') {
+    if (method === 'POST') return handleStripeWebhook(request);
     return handleMethodNotAllowed();
   }
 

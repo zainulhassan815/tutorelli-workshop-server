@@ -48,7 +48,7 @@ function getTodayDateString(): string {
 }
 
 function buildCheckoutUrl(params: {
-  productId: string;
+  priceId: string;
   bookingId: string;
   parentEmail: string;
   parentName: string;
@@ -57,9 +57,10 @@ function buildCheckoutUrl(params: {
   subject: string;
   workshopDate: string;
   sessionTime: string;
+  price: number;
 }): string {
   const queryParams = new URLSearchParams({
-    product_id: params.productId,
+    price_id: params.priceId,
     booking_id: params.bookingId,
     email: params.parentEmail,
     name: params.parentName,
@@ -68,6 +69,7 @@ function buildCheckoutUrl(params: {
     subject: params.subject,
     date: params.workshopDate,
     time: params.sessionTime,
+    amount: String(params.price),
   });
 
   return `${config.checkoutBaseUrl}?${queryParams.toString()}`;
@@ -137,7 +139,7 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       return errorResponse(ERROR_CODES.OFFERING_PAST, 'Workshop date has passed');
     }
 
-    if (!offering.productId) {
+    if (!offering.stripePriceId) {
       return errorResponse(
         ERROR_CODES.OFFERING_NO_PRODUCT,
         'Offering not configured for payment',
@@ -177,7 +179,7 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       // If payment is still pending, redirect to checkout instead of blocking
       if (existingBooking.paymentStatus === 'pending') {
         const checkoutUrl = buildCheckoutUrl({
-          productId: offering.productId,
+          priceId: offering.stripePriceId,
           bookingId: existingBooking.bookingId,
           parentEmail: parent.email,
           parentName: `${parent.firstName} ${parent.lastName}`,
@@ -186,6 +188,7 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
           subject: offering.subject,
           workshopDate: offering.workshopDate,
           sessionTime: offering.sessionTime,
+          price: offering.price,
         });
 
         const response: BookingResponse = {
@@ -216,7 +219,7 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
 
     // 8. BUILD CHECKOUT URL
     const checkoutUrl = buildCheckoutUrl({
-      productId: offering.productId,
+      priceId: offering.stripePriceId,
       bookingId: booking.bookingId,
       parentEmail: parent.email,
       parentName: `${parent.firstName} ${parent.lastName}`,
@@ -225,6 +228,7 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       subject: offering.subject,
       workshopDate: offering.workshopDate,
       sessionTime: offering.sessionTime,
+      price: offering.price,
     });
 
     // 9. RETURN RESPONSE

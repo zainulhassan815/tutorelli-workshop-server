@@ -21,7 +21,7 @@ export interface WorkshopOffering {
   price: number;
   priceLabel: string;
   zoomLink: string;
-  productId: string; // GHL product ID for checkout
+  stripePriceId: string; // Stripe price ID for checkout
 }
 
 // Contact Types
@@ -131,7 +131,7 @@ export const OFFERING_FIELDS = {
   price: 'price',
   priceLabel: 'price_label',
   zoomLink: 'zoom_link',
-  productId: 'product_id',
+  stripePriceId: 'stripe_price_id',
 } as const;
 
 export const BOOKING_FIELDS = {
@@ -166,3 +166,35 @@ export const ERROR_CODES = {
   CREATE_ERROR: 'CREATE_ERROR',
   FETCH_ERROR: 'FETCH_ERROR',
 } as const;
+
+// Stripe error codes
+export const STRIPE_ERROR_CODES = {
+  VALIDATION_ERROR: 'STRIPE_VALIDATION_ERROR',
+  SESSION_CREATE_FAILED: 'SESSION_CREATE_FAILED',
+  CARD_ERROR: 'CARD_ERROR',
+  WEBHOOK_SIGNATURE_MISSING: 'WEBHOOK_SIGNATURE_MISSING',
+  WEBHOOK_SIGNATURE_INVALID: 'WEBHOOK_SIGNATURE_INVALID',
+  WEBHOOK_PROCESSING_FAILED: 'WEBHOOK_PROCESSING_FAILED',
+  BOOKING_NOT_FOUND: 'BOOKING_NOT_FOUND',
+} as const;
+
+// Stripe Checkout Types
+export interface CreateCheckoutSessionRequest {
+  bookingId: string;
+  customerEmail: string;
+  customerName: string;
+  // Option 1: Use existing Stripe price ID (from GHL-synced product)
+  priceId?: string;
+  // Option 2: Inline pricing
+  amount?: number; // Amount in pence/cents
+  description?: string;
+}
+
+export interface CheckoutSessionResponse {
+  clientSecret: string;
+  publishableKey: string;
+}
+
+export interface PaymentStatusUpdate {
+  paymentStatus: 'paid' | 'pending' | 'expired';
+}

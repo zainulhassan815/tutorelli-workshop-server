@@ -72,7 +72,24 @@ export const bookingRequestSchema = z.object({
   student: contactInputSchema,
 });
 
+// Stripe checkout session request schema
+// Either priceId (from GHL-synced Stripe product) OR amount+description (inline pricing)
+export const createCheckoutSessionSchema = z.object({
+  bookingId: z.string().min(1, 'Booking ID is required'),
+  customerEmail: z.string().email('Invalid email format'),
+  customerName: z.string().min(1, 'Customer name is required'),
+  // Option 1: Use existing Stripe price ID (from GHL-synced product)
+  priceId: z.string().optional(),
+  // Option 2: Inline pricing (required if no priceId)
+  amount: z.number().int().positive('Amount must be a positive integer (in pence)').optional(),
+  description: z.string().optional(),
+}).refine(
+  (data) => data.priceId || (data.amount && data.description),
+  { message: 'Either priceId or both amount and description are required' }
+);
+
 // Type exports
 export type OfferingsQuery = z.infer<typeof offeringsQuerySchema>;
 export type ContactInput = z.infer<typeof contactInputSchema>;
 export type BookingRequest = z.infer<typeof bookingRequestSchema>;
+export type CreateCheckoutSessionRequest = z.infer<typeof createCheckoutSessionSchema>;

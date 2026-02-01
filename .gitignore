@@ -25,3 +25,9 @@ npm-debug.log*
 
 # Bun
 bun.lockb
+
+# Test files
+test-html/
+
+# Drafts
+drafts/

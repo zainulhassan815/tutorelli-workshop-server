@@ -36,6 +36,15 @@ export const config = {
   // Checkout
   checkoutBaseUrl: getEnv('CHECKOUT_BASE_URL'),
 
+  // Stripe
+  stripe: {
+    secretKey: getEnv('STRIPE_SECRET_KEY'),
+    publishableKey: getEnv('STRIPE_PUBLISHABLE_KEY'),
+    webhookSecret: getEnv('STRIPE_WEBHOOK_SECRET'),
+    currency: getEnv('STRIPE_CURRENCY', 'gbp'),
+    successUrl: getEnv('CHECKOUT_SUCCESS_URL'),
+  },
+
   // Request settings
   request: {
     timeoutMs: 15000,
