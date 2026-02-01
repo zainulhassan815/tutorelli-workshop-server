@@ -17,26 +17,17 @@ function getEnvNumber(key: string, fallback: number): number {
 }
 
 export const config = {
-  // Server
   port: getEnvNumber('PORT', 3000),
-
-  // GHL API
   ghl: {
     apiBaseUrl: getEnv('GHL_API_BASE_URL', 'https://services.leadconnectorhq.com'),
     accessToken: getEnv('GHL_ACCESS_TOKEN'),
     locationId: getEnv('GHL_LOCATION_ID'),
   },
-
-  // Schema IDs
   schemas: {
     workshopOfferings: getEnv('WORKSHOP_OFFERINGS_SCHEMA'),
     bookings: getEnv('BOOKINGS_SCHEMA'),
   },
-
-  // Checkout
   checkoutBaseUrl: getEnv('CHECKOUT_BASE_URL'),
-
-  // Stripe
   stripe: {
     secretKey: getEnv('STRIPE_SECRET_KEY'),
     publishableKey: getEnv('STRIPE_PUBLISHABLE_KEY'),
@@ -44,8 +35,6 @@ export const config = {
     currency: getEnv('STRIPE_CURRENCY', 'gbp'),
     successUrl: getEnv('CHECKOUT_SUCCESS_URL'),
   },
-
-  // Request settings
   request: {
     timeoutMs: 15000,
     maxRetries: 2,

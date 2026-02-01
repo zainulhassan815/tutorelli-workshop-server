@@ -12,10 +12,6 @@ import {
 import type { ApiResponse, BookingResponse } from './types';
 import { AVAILABILITY, ERROR_CODES } from './types';
 
-// ============================================================
-// RESPONSE HELPERS
-// ============================================================
-
 function successResponse<T>(data: T): Response {
   const body: ApiResponse<T> = { success: true, data };
   return new Response(JSON.stringify(body), {
@@ -75,10 +71,6 @@ function buildCheckoutUrl(params: {
   return `${config.checkoutBaseUrl}?${queryParams.toString()}`;
 }
 
-// ============================================================
-// HANDLERS
-// ============================================================
-
 export async function handleHealth(): Promise<Response> {
   return successResponse({ status: 'ok', timestamp: new Date().toISOString() });
 }
@@ -93,7 +85,6 @@ export async function handleGetOfferings(request: Request): Promise<Response> {
       return errorResponse(ERROR_CODES.VALIDATION_ERROR, formatZodError(parsed.error));
     }
 
-    // fetchOfferings now filters past dates and unavailable offerings
     const offerings = await fetchOfferings(parsed.data.yearGroup);
 
     return successResponse(offerings);
@@ -109,7 +100,6 @@ export async function handleGetOfferings(request: Request): Promise<Response> {
 
 export async function handleCreateBooking(request: Request): Promise<Response> {
   try {
-    // 1. VALIDATE INPUT
     const body = await request.json();
     const parsed = bookingRequestSchema.safeParse(body);
 
@@ -119,7 +109,6 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
 
     const { offeringId, parent, student } = parsed.data;
 
-    // 2. VALIDATE OFFERING
     const offering = await fetchOfferingById(offeringId);
 
     if (!offering) {
@@ -147,12 +136,10 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       );
     }
 
-    // 3. CREATE WORKSHOP TAG
     const workshopTag = `workshop-${offering.yearGroup}-${offering.subject}-${offering.workshopDate}`
       .toLowerCase()
       .replace(/\s+/g, '-');
 
-    // 4. GET OR CREATE PARENT CONTACT
     const parentContact = await getOrCreateParentContact({
       firstName: parent.firstName,
       lastName: parent.lastName,
@@ -161,7 +148,6 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       workshopTag,
     });
 
-    // 5. GET OR CREATE STUDENT CONTACT
     const studentContact = await getOrCreateStudentContact({
       firstName: student.firstName,
       lastName: student.lastName,
@@ -172,11 +158,9 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       yearGroup: offering.yearGroup,
     });
 
-    // 6. CHECK DUPLICATE BOOKING
     const existingBooking = await findBookingByStudentAndOffering(studentContact.id, offeringId);
 
     if (existingBooking) {
-      // If payment is still pending, redirect to checkout instead of blocking
       if (existingBooking.paymentStatus === 'pending') {
         const checkoutUrl = buildCheckoutUrl({
           priceId: offering.stripePriceId,
@@ -202,22 +186,19 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
         return successResponse(response);
       }
 
-      // Payment already completed - this is a true duplicate
       return errorResponse(
         ERROR_CODES.DUPLICATE_BOOKING,
         'Student already booked for this workshop'
       );
     }
 
-    // 7. CREATE BOOKING RECORD
     const booking = await createBookingRecord({
       parentContactId: parentContact.id,
       studentContactId: studentContact.id,
       workshopOfferingId: offeringId,
-      pricePaid: offering.price, // Use price from offering, not from input
+      pricePaid: offering.price,
     });
 
-    // 8. BUILD CHECKOUT URL
     const checkoutUrl = buildCheckoutUrl({
       priceId: offering.stripePriceId,
       bookingId: booking.bookingId,
@@ -231,7 +212,6 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       price: offering.price,
     });
 
-    // 9. RETURN RESPONSE
     const response: BookingResponse = {
       bookingId: booking.bookingId,
       recordId: booking.recordId,

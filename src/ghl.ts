@@ -9,10 +9,6 @@ import type {
 } from './types';
 import { OFFERING_FIELDS, BOOKING_FIELDS, AVAILABILITY, CONTACT_CUSTOM_FIELDS } from './types';
 
-// ============================================================
-// UTILITY FUNCTIONS
-// ============================================================
-
 function getTodayDateString(): string {
   const today = new Date();
   const year = today.getFullYear();
@@ -61,10 +57,6 @@ function parseBookingFromRecord(record: { id: string; properties: Record<string,
   };
 }
 
-// ============================================================
-// OFFERINGS
-// ============================================================
-
 export async function fetchOfferings(yearGroup: string): Promise<WorkshopOffering[]> {
   const today = getTodayDateString();
 
@@ -94,7 +86,6 @@ export async function fetchOfferings(yearGroup: string): Promise<WorkshopOfferin
   const records = (response.records || []) as unknown as Array<{ id: string; properties: Record<string, unknown> }>;
   const offerings = records.map(parseOfferingFromRecord);
 
-  // Filter: available, not full, not past (done in JS since GHL doesn't support gte for dates)
   return offerings.filter(
     (o) =>
       o.availability !== AVAILABILITY.INACTIVE &&
@@ -121,10 +112,6 @@ export async function fetchOfferingById(offeringId: string): Promise<WorkshopOff
     throw error;
   }
 }
-
-// ============================================================
-// BOOKINGS
-// ============================================================
 
 export async function findBookingByStudentAndOffering(
   studentContactId: string,
@@ -255,10 +242,6 @@ export async function createBookingRecord(input: {
   };
 }
 
-// ============================================================
-// CONTACTS
-// ============================================================
-
 export async function getOrCreateParentContact(input: {
   firstName: string;
   lastName: string;
@@ -266,7 +249,6 @@ export async function getOrCreateParentContact(input: {
   phone: string;
   workshopTag: string;
 }): Promise<Contact> {
-  // Use upsert - creates if not exists, updates if exists
   const response = await ghl.contacts.upsertContact({
     locationId: config.ghl.locationId,
     firstName: input.firstName,
@@ -303,7 +285,6 @@ export async function getOrCreateStudentContact(input: {
   parentContactId: string;
   yearGroup: string;
 }): Promise<Contact> {
-  // Use upsert - creates if not exists, updates if exists
   const response = await ghl.contacts.upsertContact({
     locationId: config.ghl.locationId,
     firstName: input.firstName,

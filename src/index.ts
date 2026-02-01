@@ -42,7 +42,6 @@ async function router(request: Request): Promise<Response> {
   const path = url.pathname;
   const method = request.method;
 
-  // Route matching
   if (path === '/api/health' && method === 'GET') {
     return handleHealth();
   }
@@ -86,7 +85,6 @@ const server = Bun.serve({
   async fetch(request: Request): Promise<Response> {
     const startTime = Date.now();
 
-    // Handle CORS preflight
     if (request.method === 'OPTIONS') {
       return handleCorsPreflightRequest();
     }
@@ -122,7 +120,6 @@ const server = Bun.serve({
 
 console.log(`Workshop Booking API running on http://localhost:${server.port}`);
 
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\nShutting down...');
   server.stop();

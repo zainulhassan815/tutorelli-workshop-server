@@ -12,10 +12,6 @@ function jsonResponse<T>(data: ApiResponse<T>, status = 200): Response {
   });
 }
 
-/**
- * Creates a Stripe Embedded Checkout session
- * Called from GHL funnel page custom code widget
- */
 export async function handleCreateCheckoutSession(request: Request): Promise<Response> {
   try {
     const body = await request.json();
@@ -36,7 +32,6 @@ export async function handleCreateCheckoutSession(request: Request): Promise<Res
 
     const { bookingId, customerEmail, customerName, priceId, amount, description } = result.data;
 
-    // Build line items - either use existing price ID or create inline pricing
     const lineItems = priceId
       ? [{ price: priceId, quantity: 1 }]
       : [
@@ -53,7 +48,6 @@ export async function handleCreateCheckoutSession(request: Request): Promise<Res
           },
         ];
 
-    // Create Stripe Checkout Session in embedded mode
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded',
       mode: 'payment',
@@ -76,7 +70,6 @@ export async function handleCreateCheckoutSession(request: Request): Promise<Res
   } catch (error: any) {
     console.error('Stripe session creation error:', error);
 
-    // Handle Stripe-specific errors
     if (error.type === 'StripeCardError') {
       return jsonResponse(
         {
@@ -103,10 +96,6 @@ export async function handleCreateCheckoutSession(request: Request): Promise<Res
   }
 }
 
-/**
- * Handles Stripe webhook events
- * Updates booking payment status in GHL
- */
 export async function handleStripeWebhook(request: Request): Promise<Response> {
   const signature = request.headers.get('stripe-signature');
 
@@ -126,7 +115,6 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
   let event;
 
   try {
-    // Get raw body for signature verification
     const rawBody = await request.text();
 
     event = await stripe.webhooks.constructEventAsync(
@@ -159,7 +147,6 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
           break;
         }
 
-        // Find booking in GHL
         const booking = await findBookingByBookingId(bookingId);
 
         if (!booking) {
@@ -167,13 +154,11 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
           break;
         }
 
-        // Idempotency check - don't update if already paid
         if (booking.paymentStatus === 'paid') {
           console.log(`Webhook: Booking ${bookingId} already paid, skipping`);
           break;
         }
 
-        // Update booking payment status
         await updateBookingPaymentStatus(booking.id, {
           paymentStatus: 'paid',
         });
@@ -198,7 +183,6 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
           break;
         }
 
-        // Only update if still pending
         if (booking.paymentStatus === 'pending') {
           await updateBookingPaymentStatus(booking.id, {
             paymentStatus: 'expired',

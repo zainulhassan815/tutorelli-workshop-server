@@ -1,4 +1,3 @@
-// API Response Types
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -8,7 +7,6 @@ export interface ApiResponse<T> {
   };
 }
 
-// Offering Types
 export interface WorkshopOffering {
   id: string;
   offering: string;
@@ -21,10 +19,9 @@ export interface WorkshopOffering {
   price: number;
   priceLabel: string;
   zoomLink: string;
-  stripePriceId: string; // Stripe price ID for checkout
+  stripePriceId: string;
 }
 
-// Contact Types
 export interface Contact {
   id: string;
   firstName: string;
@@ -48,7 +45,6 @@ export interface ContactInput {
   phone: string;
 }
 
-// Booking Types
 export interface Booking {
   id: string;
   bookingId: string;
@@ -59,14 +55,12 @@ export interface Booking {
   pricePaid: number;
 }
 
-// New comprehensive booking request (from frontend)
 export interface BookingRequest {
   offeringId: string;
   parent: ContactInput;
   student: ContactInput;
 }
 
-// Booking response with checkout URL
 export interface BookingResponse {
   bookingId: string;
   recordId: string;
@@ -75,7 +69,6 @@ export interface BookingResponse {
   checkoutUrl: string;
 }
 
-// GHL API Response Types
 export interface GHLRecordsResponse {
   records: GHLRecord[];
   meta?: {
@@ -119,7 +112,6 @@ export interface GHLRecordResponse {
   record: GHLRecord;
 }
 
-// Field mappings
 export const OFFERING_FIELDS = {
   offering: 'offering',
   intake: 'intake',
@@ -155,7 +147,6 @@ export const AVAILABILITY = {
   INACTIVE: 'inactive',
 } as const;
 
-// Error codes
 export const ERROR_CODES = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   OFFERING_NOT_FOUND: 'OFFERING_NOT_FOUND',
@@ -167,7 +158,6 @@ export const ERROR_CODES = {
   FETCH_ERROR: 'FETCH_ERROR',
 } as const;
 
-// Stripe error codes
 export const STRIPE_ERROR_CODES = {
   VALIDATION_ERROR: 'STRIPE_VALIDATION_ERROR',
   SESSION_CREATE_FAILED: 'SESSION_CREATE_FAILED',
@@ -178,15 +168,12 @@ export const STRIPE_ERROR_CODES = {
   BOOKING_NOT_FOUND: 'BOOKING_NOT_FOUND',
 } as const;
 
-// Stripe Checkout Types
 export interface CreateCheckoutSessionRequest {
   bookingId: string;
   customerEmail: string;
   customerName: string;
-  // Option 1: Use existing Stripe price ID (from GHL-synced product)
   priceId?: string;
-  // Option 2: Inline pricing
-  amount?: number; // Amount in pence/cents
+  amount?: number;
   description?: string;
 }
 
