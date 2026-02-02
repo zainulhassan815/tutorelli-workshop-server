@@ -1,0 +1,99 @@
+<style>
+  .wc-container { max-width: 900px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .wc-container * { box-sizing: border-box; margin: 0; padding: 0; }
+  .wc-title { text-align: center; color: #111; margin-bottom: 32px; font-size: 24px; }
+  .wc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 768px) { .wc-grid { grid-template-columns: 1fr; } }
+  .wc-card { background: #fff; border-radius: 12px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .wc-card h2 { margin: 0 0 24px 0; font-size: 18px; color: #111; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb; }
+  .wc-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid #f3f4f6; }
+  .wc-row:last-child { border-bottom: none; }
+  .wc-row .wc-label { color: #6b7280; font-size: 14px; }
+  .wc-row .wc-value { color: #111; font-weight: 500; font-size: 14px; text-align: right; }
+  .wc-row.wc-total { margin-top: 12px; padding-top: 20px; border-top: 2px solid #e5e7eb; border-bottom: none; }
+  .wc-row.wc-total .wc-label { font-size: 16px; font-weight: 600; color: #111; }
+  .wc-row.wc-total .wc-value { font-size: 24px; font-weight: 700; color: #059669; }
+  #wcCheckout { min-height: 300px; }
+  .wc-error { background: #fef2f2; color: #dc2626; padding: 16px; border-radius: 8px; font-size: 14px; line-height: 1.6; }
+  .wc-error a { color: #dc2626; }
+  .wc-loading { text-align: center; padding: 40px; color: #6b7280; }
+  .wc-loading::after { content: ''; display: inline-block; width: 20px; height: 20px; border: 2px solid #e5e7eb; border-top-color: #6b7280; border-radius: 50%; animation: wc-spin 0.8s linear infinite; margin-left: 10px; vertical-align: middle; }
+  @keyframes wc-spin { to { transform: rotate(360deg); } }
+  .wc-missing { text-align: center; padding: 60px 20px; grid-column: 1 / -1; background: #fff; border-radius: 12px; }
+  .wc-missing h2 { color: #dc2626; margin-bottom: 12px; }
+  .wc-missing p { color: #6b7280; }
+</style>
+
+<div class="wc-container">
+  <h1 class="wc-title">Complete Your Booking</h1>
+  <div class="wc-grid" id="wcGrid">
+    <div class="wc-card">
+      <h2>Booking Summary</h2>
+      <div class="wc-row"><span class="wc-label">Workshop</span><span class="wc-value" id="wcSubject">-</span></div>
+      <div class="wc-row"><span class="wc-label">Date</span><span class="wc-value" id="wcDate">-</span></div>
+      <div class="wc-row"><span class="wc-label">Time</span><span class="wc-value" id="wcTime">-</span></div>
+      <div class="wc-row"><span class="wc-label">Student</span><span class="wc-value" id="wcStudent">-</span></div>
+      <div class="wc-row"><span class="wc-label">Email</span><span class="wc-value" id="wcEmail">-</span></div>
+      <div class="wc-row wc-total"><span class="wc-label">Total</span><span class="wc-value" id="wcAmount">-</span></div>
+    </div>
+    <div class="wc-card">
+      <h2>Payment Details</h2>
+      <div id="wcCheckout"><div class="wc-loading">Loading checkout</div></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+(async function() {
+  const API = 'https://18-171-112-72.sslip.io';
+  const ERRORS = {
+    STRIPE_VALIDATION_ERROR: 'Unable to set up payment. Please try again.',
+    SESSION_CREATE_FAILED: 'Unable to start checkout. Please try again.',
+    FETCH_ERROR: 'Unable to connect. Please check your internet.',
+  };
+
+  function err(e) { return (e?.code && ERRORS[e.code]) || 'Unable to load checkout. Please go back and try again.'; }
+
+  const params = new URLSearchParams(window.location.search);
+  const bookingId = params.get('booking_id');
+  const email = params.get('email');
+  const name = params.get('name');
+  const priceId = params.get('price_id');
+  const amount = parseInt(params.get('amount'), 10);
+  const subject = params.get('subject');
+  const date = params.get('date');
+  const time = params.get('time');
+  const studentName = params.get('student_name');
+
+  if (!bookingId || !email || !name) {
+    document.getElementById('wcGrid').innerHTML = '<div class="wc-missing"><h2>Missing Booking Details</h2><p>This page requires booking information. Please start from the booking form.</p></div>';
+    return;
+  }
+
+  document.getElementById('wcSubject').textContent = subject || '-';
+  document.getElementById('wcDate').textContent = date || '-';
+  document.getElementById('wcTime').textContent = time || '-';
+  document.getElementById('wcStudent').textContent = studentName || '-';
+  document.getElementById('wcEmail').textContent = email || '-';
+  document.getElementById('wcAmount').textContent = amount ? `£${amount}` : '-';
+
+  const body = { bookingId, customerEmail: email, customerName: name };
+  if (priceId) { body.priceId = priceId; }
+  else if (amount) { body.amount = amount * 100; body.description = `${subject || 'Workshop'} - ${date || ''} ${time || ''}`.trim(); }
+
+  try {
+    const res = await fetch(`${API}/api/checkout/session`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const result = await res.json();
+    if (!result.success) throw result.error || { code: 'SESSION_CREATE_FAILED' };
+
+    const stripe = Stripe(result.data.publishableKey);
+    const checkout = await stripe.initEmbeddedCheckout({ clientSecret: result.data.clientSecret });
+    document.getElementById('wcCheckout').innerHTML = '';
+    checkout.mount('#wcCheckout');
+  } catch (e) {
+    document.getElementById('wcCheckout').innerHTML = `<div class="wc-error">${err(e)}<br><br><a href="javascript:history.back()">Go back and try again</a></div>`;
+    console.error('Checkout error:', e);
+  }
+})();
+</script>

@@ -1,0 +1,208 @@
+<style>
+  .wf-container * { box-sizing: border-box; margin: 0; padding: 0; }
+  .wf-container { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 15px rgba(0,0,0,.08); padding: 30px 35px; }
+  .wf-title { font-size: 18px; font-weight: 600; color: #333; text-align: center; margin-bottom: 20px; }
+  .wf-progress { display: flex; justify-content: center; align-items: center; margin-bottom: 25px; }
+  .wf-step { width: 32px; height: 32px; border-radius: 50%; background: #e0e0e0; color: #999; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .wf-step.active, .wf-step.completed { background: #27ae60; color: #fff; }
+  .wf-connector { width: 60px; height: 3px; background: #e0e0e0; margin: 0 12px; transition: background 0.2s; }
+  .wf-connector.completed { background: #27ae60; }
+  .wf-form-step { display: none; }
+  .wf-form-step.active { display: block; }
+  .wf-group { margin-bottom: 16px; }
+  .wf-group label { display: block; font-size: 14px; font-weight: 500; color: #333; margin-bottom: 6px; }
+  .wf-required { color: #e74c3c; }
+  .wf-control { width: 100%; padding: 12px 14px; font-size: 14px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #333; transition: border-color 0.2s; }
+  .wf-control:focus { outline: none; border-color: #4a90d9; }
+  .wf-control:disabled { background: #f7f7f7; color: #999; cursor: not-allowed; }
+  select.wf-control { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 35px; }
+  .wf-row { display: flex; gap: 15px; }
+  .wf-row .wf-group { flex: 1; }
+  .wf-section { font-size: 14px; font-weight: 600; color: #444; margin: 20px 0 12px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
+  .wf-status { font-size: 12px; margin-top: 5px; min-height: 18px; display: flex; align-items: center; gap: 6px; }
+  .wf-status.loading { color: #888; font-style: italic; }
+  .wf-status.error { color: #e74c3c; }
+  .wf-retry { background: none; border: none; color: #3498db; text-decoration: underline; cursor: pointer; font-size: 12px; padding: 0; margin-left: 4px; }
+  .wf-spinner { width: 12px; height: 12px; border: 2px solid #ddd; border-top-color: #888; border-radius: 50%; animation: wf-spin 0.8s linear infinite; }
+  @keyframes wf-spin { to { transform: rotate(360deg); } }
+  .wf-buttons { display: flex; gap: 12px; margin-top: 25px; }
+  .wf-btn { flex: 1; padding: 13px 18px; font-size: 15px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .wf-btn-secondary { background: #f0f0f0; color: #555; }
+  .wf-btn-secondary:hover { background: #e5e5e5; }
+  .wf-btn-primary { background: #3498db; color: #fff; }
+  .wf-btn-primary:hover:not(:disabled) { background: #2980b9; }
+  .wf-btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; }
+  .wf-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .wf-overlay.active { display: flex; }
+  .wf-overlay .wf-spinner { width: 40px; height: 40px; border-width: 4px; }
+  .wf-overlay-text { font-size: 16px; color: #333; font-weight: 500; }
+  .wf-alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: none; }
+  .wf-alert.visible { display: block; }
+  .wf-alert-error { background: #fdecea; color: #c0392b; border: 1px solid #f5c6cb; }
+  .wf-alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+  @media (max-width: 520px) { .wf-container { padding: 25px 20px; margin: 0 10px; } .wf-row { flex-direction: column; gap: 0; } }
+</style>
+
+<div class="wf-overlay" id="wfOverlay">
+  <div class="wf-spinner"></div>
+  <div class="wf-overlay-text">Processing your booking...</div>
+</div>
+
+<div class="wf-container">
+  <h1 class="wf-title">Workshop Booking</h1>
+  <div class="wf-alert wf-alert-error" id="wfAlertError"></div>
+  <div class="wf-alert wf-alert-success" id="wfAlertSuccess"></div>
+
+  <div class="wf-progress">
+    <div class="wf-step active" id="wfStep1">1</div>
+    <div class="wf-connector" id="wfConnector"></div>
+    <div class="wf-step" id="wfStep2">2</div>
+  </div>
+
+  <form id="wfForm" novalidate>
+    <div class="wf-form-step active" id="wfStepContent1">
+      <div class="wf-group">
+        <label>Year Group <span class="wf-required">*</span></label>
+        <select id="wfYearGroup" class="wf-control" required>
+          <option value="">-- Select Year Group --</option>
+          <option value="gcse">GCSE</option>
+          <option value="alevel">A Level</option>
+        </select>
+      </div>
+      <div class="wf-group">
+        <label>Subject <span class="wf-required">*</span></label>
+        <select id="wfSubject" class="wf-control" disabled required><option value="">-- Select Subject --</option></select>
+        <div class="wf-status" id="wfSubjectStatus"></div>
+      </div>
+      <div class="wf-group">
+        <label>Workshop Date <span class="wf-required">*</span></label>
+        <select id="wfDate" class="wf-control" disabled required><option value="">-- Select Date --</option></select>
+        <div class="wf-status" id="wfDateStatus"></div>
+      </div>
+      <div class="wf-group">
+        <label>Session Time <span class="wf-required">*</span></label>
+        <select id="wfTime" class="wf-control" disabled required><option value="">-- Select Time --</option></select>
+        <div class="wf-status" id="wfTimeStatus"></div>
+      </div>
+      <div class="wf-buttons">
+        <button type="button" class="wf-btn wf-btn-primary" id="wfNext" disabled>Continue</button>
+      </div>
+    </div>
+
+    <div class="wf-form-step" id="wfStepContent2">
+      <div class="wf-section">Parent/Guardian</div>
+      <div class="wf-row">
+        <div class="wf-group"><label>First Name <span class="wf-required">*</span></label><input type="text" id="wfParentFirst" class="wf-control" required></div>
+        <div class="wf-group"><label>Last Name <span class="wf-required">*</span></label><input type="text" id="wfParentLast" class="wf-control" required></div>
+      </div>
+      <div class="wf-row">
+        <div class="wf-group"><label>Email <span class="wf-required">*</span></label><input type="email" id="wfParentEmail" class="wf-control" required></div>
+        <div class="wf-group"><label>Phone <span class="wf-required">*</span></label><input type="tel" id="wfParentPhone" class="wf-control" required></div>
+      </div>
+      <div class="wf-section">Student</div>
+      <div class="wf-row">
+        <div class="wf-group"><label>First Name <span class="wf-required">*</span></label><input type="text" id="wfStudentFirst" class="wf-control" required></div>
+        <div class="wf-group"><label>Last Name <span class="wf-required">*</span></label><input type="text" id="wfStudentLast" class="wf-control" required></div>
+      </div>
+      <div class="wf-row">
+        <div class="wf-group"><label>Email <span class="wf-required">*</span></label><input type="email" id="wfStudentEmail" class="wf-control" required></div>
+        <div class="wf-group"><label>Phone <span class="wf-required">*</span></label><input type="tel" id="wfStudentPhone" class="wf-control" required></div>
+      </div>
+      <div class="wf-buttons">
+        <button type="button" class="wf-btn wf-btn-secondary" id="wfBack">Back</button>
+        <button type="submit" class="wf-btn wf-btn-primary" id="wfSubmit">Pay Now</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+(function() {
+  const API = 'https://18-171-112-72.sslip.io/api';
+  const ERRORS = {
+    VALIDATION_ERROR: 'Please check your details and try again.',
+    OFFERING_NOT_FOUND: 'This workshop is no longer available.',
+    OFFERING_UNAVAILABLE: 'Sorry, this workshop is now fully booked.',
+    OFFERING_PAST: 'This workshop date has passed.',
+    DUPLICATE_BOOKING: 'This student is already registered for this workshop.',
+    FETCH_ERROR: 'Unable to connect. Please check your internet.',
+  };
+
+  const state = { yearGroup: null, subject: null, date: null, offeringId: null, cache: new Map(), reqId: 0, submitting: false };
+  const $ = id => document.getElementById(id);
+
+  function err(e) { return (e?.code && ERRORS[e.code]) || 'Something went wrong. Please try again.'; }
+  function esc(t) { const d = document.createElement('div'); d.textContent = t ?? ''; return d.innerHTML; }
+  function fmtDate(s) { if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return s || ''; const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); }
+
+  function setStatus(id, type, msg, retry) {
+    const el = $(id); if (!el) return; el.className = 'wf-status'; el.innerHTML = '';
+    if (type === 'loading') { el.classList.add('loading'); el.innerHTML = `<span class="wf-spinner"></span><span>${esc(msg)}</span>`; }
+    else if (type === 'error') { el.classList.add('error'); el.innerHTML = esc(msg); if (retry) { const b = document.createElement('button'); b.type = 'button'; b.className = 'wf-retry'; b.textContent = 'Retry'; b.onclick = retry; el.appendChild(b); } }
+  }
+
+  function setOpts(el, opts, ph) { el.innerHTML = `<option value="">${esc(ph)}</option>` + opts.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join(''); }
+  function updateNext() { $('wfNext').disabled = !(state.yearGroup && state.subject && state.date && state.offeringId); }
+  function goStep(n) { $('wfStepContent1').classList.toggle('active', n===1); $('wfStepContent2').classList.toggle('active', n===2); $('wfStep1').className = n===1 ? 'wf-step active' : 'wf-step completed'; $('wfStep2').className = n===2 ? 'wf-step active' : 'wf-step'; $('wfConnector').classList.toggle('completed', n===2); }
+  function alert(type, msg) { $('wfAlertError').classList.remove('visible'); $('wfAlertSuccess').classList.remove('visible'); const el = type === 'error' ? $('wfAlertError') : $('wfAlertSuccess'); el.textContent = msg; el.classList.add('visible'); }
+  function hideAlerts() { $('wfAlertError').classList.remove('visible'); $('wfAlertSuccess').classList.remove('visible'); }
+
+  async function api(endpoint, opts = {}) {
+    let res; try { res = await fetch(`${API}${endpoint}`, { ...opts, headers: { 'Content-Type': 'application/json', ...opts.headers } }); } catch { throw { code: 'FETCH_ERROR' }; }
+    const data = await res.json(); if (!data.success) throw data.error || { code: 'INTERNAL_ERROR' }; return data.data;
+  }
+
+  function resetSubject() { setOpts($('wfSubject'), [], '-- Select Subject --'); $('wfSubject').disabled = true; state.subject = null; $('wfSubjectStatus').innerHTML = ''; resetDate(); }
+  function resetDate() { setOpts($('wfDate'), [], '-- Select Date --'); $('wfDate').disabled = true; state.date = null; $('wfDateStatus').innerHTML = ''; resetTime(); }
+  function resetTime() { setOpts($('wfTime'), [], '-- Select Time --'); $('wfTime').disabled = true; state.offeringId = null; $('wfTimeStatus').innerHTML = ''; updateNext(); }
+
+  async function loadSubjects(yg) {
+    const rid = ++state.reqId; resetSubject(); setStatus('wfSubjectStatus', 'loading', 'Loading...');
+    try {
+      let o = state.cache.get(yg); if (!o) { o = await api(`/offerings?yearGroup=${encodeURIComponent(yg)}`); state.cache.set(yg, o); }
+      if (rid !== state.reqId) return;
+      const subjs = [...new Set(o.map(x => x.subject).filter(Boolean))].sort();
+      if (!subjs.length) { setStatus('wfSubjectStatus', 'error', 'No subjects available.'); return; }
+      setOpts($('wfSubject'), subjs.map(s => ({ value: s, label: s })), '-- Select Subject --');
+      $('wfSubject').disabled = false; $('wfSubjectStatus').innerHTML = '';
+    } catch (e) { if (rid === state.reqId) setStatus('wfSubjectStatus', 'error', 'Failed to load.', () => loadSubjects(yg)); }
+  }
+
+  function loadDates(yg, subj) {
+    resetDate(); const o = state.cache.get(yg) || [];
+    const dates = [...new Set(o.filter(x => x.subject === subj).map(x => x.workshopDate).filter(Boolean))].sort();
+    if (!dates.length) { setStatus('wfDateStatus', 'error', 'No dates available.'); return; }
+    setOpts($('wfDate'), dates.map(d => ({ value: d, label: fmtDate(d) })), '-- Select Date --'); $('wfDate').disabled = false;
+  }
+
+  function loadTimes(yg, subj, dt) {
+    resetTime(); const o = state.cache.get(yg) || [];
+    const sessions = o.filter(x => x.subject === subj && x.workshopDate === dt).sort((a,b) => (a.sessionTime||'').localeCompare(b.sessionTime||''));
+    if (!sessions.length) { setStatus('wfTimeStatus', 'error', 'No sessions available.'); return; }
+    setOpts($('wfTime'), sessions.map(s => ({ value: s.id, label: `${s.sessionTime}${s.priceLabel ? ` — ${s.priceLabel}` : ''}` })), '-- Select Time --');
+    $('wfTime').disabled = false; $('wfTime')._sessions = sessions;
+  }
+
+  $('wfYearGroup').onchange = function() { state.yearGroup = this.value || null; state.yearGroup ? loadSubjects(state.yearGroup) : resetSubject(); };
+  $('wfSubject').onchange = function() { state.subject = this.value || null; state.subject ? loadDates(state.yearGroup, state.subject) : resetDate(); };
+  $('wfDate').onchange = function() { state.date = this.value || null; state.date ? loadTimes(state.yearGroup, state.subject, state.date) : resetTime(); };
+  $('wfTime').onchange = function() { state.offeringId = this.value || null; updateNext(); };
+  $('wfNext').onclick = () => goStep(2);
+  $('wfBack').onclick = () => goStep(1);
+
+  $('wfForm').onsubmit = async function(e) {
+    e.preventDefault(); if (state.submitting) return;
+    if (!this.checkValidity()) { this.reportValidity(); return; }
+    hideAlerts(); state.submitting = true; $('wfSubmit').disabled = true; $('wfOverlay').classList.add('active');
+    try {
+      const result = await api('/bookings', { method: 'POST', body: JSON.stringify({
+        offeringId: state.offeringId,
+        parent: { firstName: $('wfParentFirst').value.trim(), lastName: $('wfParentLast').value.trim(), email: $('wfParentEmail').value.trim(), phone: $('wfParentPhone').value.trim() },
+        student: { firstName: $('wfStudentFirst').value.trim(), lastName: $('wfStudentLast').value.trim(), email: $('wfStudentEmail').value.trim(), phone: $('wfStudentPhone').value.trim() }
+      })});
+      $('wfOverlay').classList.remove('active'); alert('success', 'Booking created! Redirecting to payment...');
+      setTimeout(() => { window.location.href = result.checkoutUrl; }, 500);
+    } catch (e) { $('wfOverlay').classList.remove('active'); alert('error', err(e)); state.submitting = false; $('wfSubmit').disabled = false; }
+  };
+})();
+</script>
