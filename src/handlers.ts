@@ -44,7 +44,6 @@ function getTodayDateString(): string {
 }
 
 function buildCheckoutUrl(params: {
-  priceId: string;
   bookingId: string;
   parentEmail: string;
   parentName: string;
@@ -56,7 +55,6 @@ function buildCheckoutUrl(params: {
   price: number;
 }): string {
   const queryParams = new URLSearchParams({
-    price_id: params.priceId,
     booking_id: params.bookingId,
     email: params.parentEmail,
     name: params.parentName,
@@ -128,14 +126,6 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       return errorResponse(ERROR_CODES.OFFERING_PAST, 'Workshop date has passed');
     }
 
-    if (!offering.stripePriceId) {
-      return errorResponse(
-        ERROR_CODES.OFFERING_NO_PRODUCT,
-        'Offering not configured for payment',
-        500
-      );
-    }
-
     const workshopTag = `workshop-${offering.yearGroup}-${offering.subject}-${offering.workshopDate}`
       .toLowerCase()
       .replace(/\s+/g, '-');
@@ -163,7 +153,6 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
     if (existingBooking) {
       if (existingBooking.paymentStatus === 'pending') {
         const checkoutUrl = buildCheckoutUrl({
-          priceId: offering.stripePriceId,
           bookingId: existingBooking.bookingId,
           parentEmail: parent.email,
           parentName: `${parent.firstName} ${parent.lastName}`,
@@ -200,7 +189,6 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
     });
 
     const checkoutUrl = buildCheckoutUrl({
-      priceId: offering.stripePriceId,
       bookingId: booking.bookingId,
       parentEmail: parent.email,
       parentName: `${parent.firstName} ${parent.lastName}`,

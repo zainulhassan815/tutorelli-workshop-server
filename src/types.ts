@@ -19,7 +19,7 @@ export interface WorkshopOffering {
   price: number;
   priceLabel: string;
   zoomLink: string;
-  stripePriceId: string;
+  stripePriceId?: string;
 }
 
 export interface Contact {
@@ -152,7 +152,6 @@ export const ERROR_CODES = {
   OFFERING_NOT_FOUND: 'OFFERING_NOT_FOUND',
   OFFERING_UNAVAILABLE: 'OFFERING_UNAVAILABLE',
   OFFERING_PAST: 'OFFERING_PAST',
-  OFFERING_NO_PRODUCT: 'OFFERING_NO_PRODUCT',
   DUPLICATE_BOOKING: 'DUPLICATE_BOOKING',
   CREATE_ERROR: 'CREATE_ERROR',
   FETCH_ERROR: 'FETCH_ERROR',
