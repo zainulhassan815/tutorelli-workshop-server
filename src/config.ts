@@ -22,6 +22,7 @@ export const config = {
     apiBaseUrl: getEnv('GHL_API_BASE_URL', 'https://services.leadconnectorhq.com'),
     accessToken: getEnv('GHL_ACCESS_TOKEN'),
     locationId: getEnv('GHL_LOCATION_ID'),
+    bookingWebhookUrl: process.env.GHL_BOOKING_WEBHOOK_URL,
   },
   schemas: {
     workshopOfferings: getEnv('WORKSHOP_OFFERINGS_SCHEMA'),

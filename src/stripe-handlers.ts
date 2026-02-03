@@ -1,7 +1,7 @@
 import { stripe } from './stripe-client';
 import { config } from './config';
 import { createCheckoutSessionSchema } from './validation';
-import { findBookingByBookingId, updateBookingPaymentStatus } from './ghl';
+import { findBookingByBookingId, updateBookingPaymentStatus, triggerBookingWebhook } from './ghl';
 import { STRIPE_ERROR_CODES } from './types';
 import type { ApiResponse, CheckoutSessionResponse } from './types';
 
@@ -164,6 +164,8 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
         });
 
         console.log(`Webhook: Booking ${bookingId} marked as paid`);
+
+        await triggerBookingWebhook(booking);
         break;
       }
 

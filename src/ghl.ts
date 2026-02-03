@@ -313,3 +313,20 @@ export async function getOrCreateStudentContact(input: {
     tags: contact.tags || [],
   };
 }
+
+export async function triggerBookingWebhook(booking: Booking): Promise<void> {
+  if (!config.ghl.bookingWebhookUrl) {
+    return;
+  }
+
+  try {
+    await fetch(config.ghl.bookingWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(booking),
+    });
+    console.log(`Triggered GHL workflow for booking ${booking.bookingId}`);
+  } catch (error) {
+    console.error(`Failed to trigger GHL workflow for booking ${booking.bookingId}`, error);
+  }
+}
