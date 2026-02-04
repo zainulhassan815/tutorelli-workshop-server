@@ -96,7 +96,7 @@
         <div class="wf-group"><label>Last Name <span class="wf-required">*</span></label><input type="text" id="wfParentLast" class="wf-control" required></div>
       </div>
       <div class="wf-row">
-        <div class="wf-group"><label>Email <span class="wf-required">*</span></label><input type="email" id="wfParentEmail" class="wf-control" required></div>
+        <div class="wf-group"><label>Parent/Guardian's Email <span class="wf-required">*</span></label><input type="email" id="wfParentEmail" class="wf-control" required></div>
         <div class="wf-group"><label>Phone <span class="wf-required">*</span></label><input type="tel" id="wfParentPhone" class="wf-control" required></div>
       </div>
       <div class="wf-section">Student</div>
@@ -105,7 +105,7 @@
         <div class="wf-group"><label>Last Name <span class="wf-required">*</span></label><input type="text" id="wfStudentLast" class="wf-control" required></div>
       </div>
       <div class="wf-row">
-        <div class="wf-group"><label>Email <span class="wf-required">*</span></label><input type="email" id="wfStudentEmail" class="wf-control" required></div>
+        <div class="wf-group"><label>Student Email <span class="wf-required">*</span></label><input type="email" id="wfStudentEmail" class="wf-control" required></div>
         <div class="wf-group"><label>Phone <span class="wf-required">*</span></label><input type="tel" id="wfStudentPhone" class="wf-control" required></div>
       </div>
       <div class="wf-buttons">
@@ -128,7 +128,7 @@
     FETCH_ERROR: 'Unable to connect. Please check your internet.',
   };
 
-  const state = { yearGroup: null, subject: null, date: null, offeringId: null, cache: new Map(), reqId: 0, submitting: false };
+  const state = { yearGroup: null, subject: null, date: null, offeringId: null, selectedPrice: null, cache: new Map(), reqId: 0, submitting: false };
   const $ = id => document.getElementById(id);
 
   function err(e) { return (e?.code && ERRORS[e.code]) || 'Something went wrong. Please try again.'; }
@@ -141,8 +141,13 @@
     else if (type === 'error') { el.classList.add('error'); el.innerHTML = esc(msg); if (retry) { const b = document.createElement('button'); b.type = 'button'; b.className = 'wf-retry'; b.textContent = 'Retry'; b.onclick = retry; el.appendChild(b); } }
   }
 
-  function setOpts(el, opts, ph) { el.innerHTML = `<option value="">${esc(ph)}</option>` + opts.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join(''); }
-  function updateNext() { $('wfNext').disabled = !(state.yearGroup && state.subject && state.date && state.offeringId); }
+  function setOpts(el, opts, ph) { el.innerHTML = `<option value="">${esc(ph)}</option>` + opts.map(o => `<option value="${esc(o.value)}"${o.disabled ? ' disabled' : ''}>${esc(o.label)}</option>`).join(''); }
+  function updateNext() {
+    const ready = state.yearGroup && state.subject && state.date && state.offeringId;
+    $('wfNext').disabled = !ready;
+    if (ready && state.selectedPrice) { $('wfNext').textContent = `Register and Pay \u00A3${state.selectedPrice}`; }
+    else { $('wfNext').textContent = 'Continue'; }
+  }
   function goStep(n) { $('wfStepContent1').classList.toggle('active', n===1); $('wfStepContent2').classList.toggle('active', n===2); $('wfStep1').className = n===1 ? 'wf-step active' : 'wf-step completed'; $('wfStep2').className = n===2 ? 'wf-step active' : 'wf-step'; $('wfConnector').classList.toggle('completed', n===2); }
   function alert(type, msg) { $('wfAlertError').classList.remove('visible'); $('wfAlertSuccess').classList.remove('visible'); const el = type === 'error' ? $('wfAlertError') : $('wfAlertSuccess'); el.textContent = msg; el.classList.add('visible'); }
   function hideAlerts() { $('wfAlertError').classList.remove('visible'); $('wfAlertSuccess').classList.remove('visible'); }
@@ -154,7 +159,7 @@
 
   function resetSubject() { setOpts($('wfSubject'), [], '-- Select Subject --'); $('wfSubject').disabled = true; state.subject = null; $('wfSubjectStatus').innerHTML = ''; resetDate(); }
   function resetDate() { setOpts($('wfDate'), [], '-- Select Date --'); $('wfDate').disabled = true; state.date = null; $('wfDateStatus').innerHTML = ''; resetTime(); }
-  function resetTime() { setOpts($('wfTime'), [], '-- Select Time --'); $('wfTime').disabled = true; state.offeringId = null; $('wfTimeStatus').innerHTML = ''; updateNext(); }
+  function resetTime() { setOpts($('wfTime'), [], '-- Select Time --'); $('wfTime').disabled = true; state.offeringId = null; state.selectedPrice = null; $('wfTimeStatus').innerHTML = ''; updateNext(); }
 
   async function loadSubjects(yg) {
     const rid = ++state.reqId; resetSubject(); setStatus('wfSubjectStatus', 'loading', 'Loading...');
@@ -179,14 +184,21 @@
     resetTime(); const o = state.cache.get(yg) || [];
     const sessions = o.filter(x => x.subject === subj && x.workshopDate === dt).sort((a,b) => (a.sessionTime||'').localeCompare(b.sessionTime||''));
     if (!sessions.length) { setStatus('wfTimeStatus', 'error', 'No sessions available.'); return; }
-    setOpts($('wfTime'), sessions.map(s => ({ value: s.id, label: `${s.sessionTime}${s.priceLabel ? ` — ${s.priceLabel}` : ''}` })), '-- Select Time --');
+    const isFull = s => s.availability === 'full';
+    setOpts($('wfTime'), sessions.map(s => ({ value: s.id, label: `${s.sessionTime}${s.priceLabel ? ` \u2014 ${s.priceLabel}` : ''}${isFull(s) ? ' (Full)' : ''}`, disabled: isFull(s) })), '-- Select Time --');
     $('wfTime').disabled = false; $('wfTime')._sessions = sessions;
   }
 
   $('wfYearGroup').onchange = function() { state.yearGroup = this.value || null; state.yearGroup ? loadSubjects(state.yearGroup) : resetSubject(); };
   $('wfSubject').onchange = function() { state.subject = this.value || null; state.subject ? loadDates(state.yearGroup, state.subject) : resetDate(); };
   $('wfDate').onchange = function() { state.date = this.value || null; state.date ? loadTimes(state.yearGroup, state.subject, state.date) : resetTime(); };
-  $('wfTime').onchange = function() { state.offeringId = this.value || null; updateNext(); };
+  $('wfTime').onchange = function() {
+    state.offeringId = this.value || null;
+    const sessions = this._sessions || [];
+    const selected = sessions.find(s => s.id === state.offeringId);
+    state.selectedPrice = selected ? selected.price : null;
+    updateNext();
+  };
   $('wfNext').onclick = () => goStep(2);
   $('wfBack').onclick = () => goStep(1);
 

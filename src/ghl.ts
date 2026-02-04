@@ -89,7 +89,6 @@ export async function fetchOfferings(yearGroup: string): Promise<WorkshopOfferin
   return offerings.filter(
     (o) =>
       o.availability !== AVAILABILITY.INACTIVE &&
-      o.availability !== AVAILABILITY.FULL &&
       o.workshopDate >= today
   );
 }

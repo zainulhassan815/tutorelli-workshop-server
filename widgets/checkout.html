@@ -33,7 +33,8 @@
       <div class="wc-row"><span class="wc-label">Date</span><span class="wc-value" id="wcDate">-</span></div>
       <div class="wc-row"><span class="wc-label">Time</span><span class="wc-value" id="wcTime">-</span></div>
       <div class="wc-row"><span class="wc-label">Student</span><span class="wc-value" id="wcStudent">-</span></div>
-      <div class="wc-row"><span class="wc-label">Email</span><span class="wc-value" id="wcEmail">-</span></div>
+      <div class="wc-row"><span class="wc-label">Student Email</span><span class="wc-value" id="wcStudentEmail">-</span></div>
+      <div class="wc-row"><span class="wc-label">Parent/Guardian's Email</span><span class="wc-value" id="wcEmail">-</span></div>
       <div class="wc-row wc-total"><span class="wc-label">Total</span><span class="wc-value" id="wcAmount">-</span></div>
     </div>
     <div class="wc-card">
@@ -80,6 +81,7 @@
   document.getElementById('wcDate').textContent = offeringDate || '-';
   document.getElementById('wcTime').textContent = offeringTime || '-';
   document.getElementById('wcStudent').textContent = studentName || '-';
+  document.getElementById('wcStudentEmail').textContent = studentEmail || '-';
   document.getElementById('wcEmail').textContent = parentEmail || '-';
   document.getElementById('wcAmount').textContent = offeringPrice ? `£${offeringPrice}` : '-';
 
