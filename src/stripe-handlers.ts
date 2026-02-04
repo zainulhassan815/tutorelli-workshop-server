@@ -1,7 +1,7 @@
 import { stripe } from './stripe-client';
 import { config } from './config';
 import { createCheckoutSessionSchema } from './validation';
-import { findBookingByBookingId, updateBookingPaymentStatus, triggerBookingWebhook, fetchOfferingById, getContactById } from './ghl';
+import { findBookingByBookingId, updateBooking, triggerBookingWebhook } from './ghl';
 import { STRIPE_ERROR_CODES } from './types';
 import type { ApiResponse, CheckoutSessionResponse } from './types';
 
@@ -30,7 +30,11 @@ export async function handleCreateCheckoutSession(request: Request): Promise<Res
       );
     }
 
-    const { bookingId, customerEmail, customerName, priceId, amount, description } = result.data;
+    const {
+      bookingId, customerEmail, customerName, priceId, amount, description,
+      parentPhone, studentName, studentEmail,
+      offeringName, offeringSubject, offeringDate, offeringTime, offeringYearGroup, offeringZoomLink,
+    } = result.data;
 
     const lineItems = priceId
       ? [{ price: priceId, quantity: 1 }]
@@ -56,6 +60,16 @@ export async function handleCreateCheckoutSession(request: Request): Promise<Res
       metadata: {
         bookingId,
         customerName,
+        customerEmail,
+        parentPhone,
+        studentName,
+        studentEmail,
+        offeringName,
+        offeringSubject,
+        offeringDate,
+        offeringTime,
+        offeringYearGroup,
+        offeringZoomLink,
       },
       return_url: `${config.stripe.successUrl}?booking_id=${bookingId}&session_id={CHECKOUT_SESSION_ID}`,
     });
@@ -140,7 +154,8 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        const bookingId = session.metadata?.bookingId;
+        const meta = session.metadata || {};
+        const bookingId = meta.bookingId;
 
         if (!bookingId) {
           console.error('Webhook: Missing bookingId in session metadata');
@@ -154,39 +169,58 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
           break;
         }
 
-        if (booking.paymentStatus === 'paid') {
-          console.log(`Webhook: Booking ${bookingId} already paid, skipping`);
+        // Fully processed — nothing to do
+        if (booking.paymentStatus === 'paid' && booking.webhookTriggered) {
+          console.log(`Webhook: Booking ${bookingId} already complete, skipping`);
           break;
         }
 
-        await updateBookingPaymentStatus(booking.id, {
-          paymentStatus: 'paid',
-        });
+        // Mark as paid if not already (idempotent on retries)
+        if (booking.paymentStatus !== 'paid') {
+          await updateBooking(booking.id, { paymentStatus: 'paid' });
+          console.log(`Webhook: Booking ${bookingId} marked as paid`);
+        }
 
-        console.log(`Webhook: Booking ${bookingId} marked as paid`);
-
-        const [offering, parentContact, studentContact] = await Promise.all([
-          fetchOfferingById(booking.workshopOfferingId),
-          getContactById(booking.parentContactId),
-          getContactById(booking.studentContactId),
-        ]);
-
+        // Trigger GHL webhook — if this fails, the whole handler returns 500
+        // so Stripe retries. The payment update above is skipped on retry
+        // (already paid), but we reattempt the webhook since webhookTriggered is still false.
         const paymentIntent = session.payment_intent;
 
         await triggerBookingWebhook({
-          booking,
-          offering,
-          parent: parentContact,
-          student: studentContact,
+          booking: {
+            bookingId: booking.bookingId,
+            paymentStatus: 'paid',
+            pricePaid: booking.pricePaid,
+          },
+          offering: {
+            name: meta.offeringName || '',
+            subject: meta.offeringSubject || '',
+            workshopDate: meta.offeringDate || '',
+            sessionTime: meta.offeringTime || '',
+            yearGroup: meta.offeringYearGroup || '',
+            zoomLink: meta.offeringZoomLink || '',
+          },
+          parent: {
+            name: meta.customerName || '',
+            email: meta.customerEmail || '',
+            phone: meta.parentPhone || '',
+          },
+          student: {
+            name: meta.studentName || '',
+            email: meta.studentEmail || '',
+          },
           payment: {
             stripeSessionId: session.id,
             stripePaymentIntentId: typeof paymentIntent === 'string' ? paymentIntent : paymentIntent?.id ?? null,
             amountTotal: session.amount_total,
             currency: session.currency,
-            customerEmail: session.customer_email,
-            customerName: session.metadata?.customerName ?? null,
           },
         });
+
+        // Mark webhook as triggered — if this fails, Stripe retries,
+        // webhook fires again (acceptable), and we reattempt the flag update.
+        await updateBooking(booking.id, { webhookTriggered: true });
+        console.log(`Webhook: Booking ${bookingId} fully processed`);
         break;
       }
 
@@ -207,9 +241,7 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
         }
 
         if (booking.paymentStatus === 'pending') {
-          await updateBookingPaymentStatus(booking.id, {
-            paymentStatus: 'expired',
-          });
+          await updateBooking(booking.id, { paymentStatus: 'expired' });
           console.log(`Webhook: Booking ${bookingId} marked as expired`);
         }
         break;

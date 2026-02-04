@@ -53,6 +53,7 @@ export interface Booking {
   workshopOfferingId: string;
   paymentStatus: string;
   pricePaid: number;
+  webhookTriggered: boolean;
 }
 
 export interface BookingRequest {
@@ -133,6 +134,7 @@ export const BOOKING_FIELDS = {
   workshopOfferingId: 'workshop_offering_id',
   paymentStatus: 'payment_status',
   pricePaid: 'price',
+  webhookTriggered: 'webhook_triggered',
 } as const;
 
 export const CONTACT_CUSTOM_FIELDS = {
@@ -181,21 +183,33 @@ export interface CheckoutSessionResponse {
   publishableKey: string;
 }
 
-export interface PaymentStatusUpdate {
-  paymentStatus: 'paid' | 'pending' | 'expired';
-}
-
 export interface BookingWebhookPayload {
-  booking: Booking;
-  offering: WorkshopOffering | null;
-  parent: Contact | null;
-  student: Contact | null;
+  booking: {
+    bookingId: string;
+    paymentStatus: string;
+    pricePaid: number;
+  };
+  offering: {
+    name: string;
+    subject: string;
+    workshopDate: string;
+    sessionTime: string;
+    yearGroup: string;
+    zoomLink: string;
+  };
+  parent: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  student: {
+    name: string;
+    email: string;
+  };
   payment: {
     stripeSessionId: string;
     stripePaymentIntentId: string | null;
     amountTotal: number | null;
     currency: string | null;
-    customerEmail: string | null;
-    customerName: string | null;
   };
 }

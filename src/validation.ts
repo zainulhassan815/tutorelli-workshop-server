@@ -64,6 +64,15 @@ export const createCheckoutSessionSchema = z.object({
   priceId: z.string().optional(),
   amount: z.number().int().positive('Amount must be a positive integer (in pence)').optional(),
   description: z.string().optional(),
+  parentPhone: z.string().min(1, 'Parent phone is required'),
+  studentName: z.string().min(1, 'Student name is required'),
+  studentEmail: z.string().email('Invalid student email format'),
+  offeringName: z.string().min(1, 'Offering name is required'),
+  offeringSubject: z.string().min(1, 'Offering subject is required'),
+  offeringDate: z.string().min(1, 'Offering date is required'),
+  offeringTime: z.string().min(1, 'Offering time is required'),
+  offeringYearGroup: z.string().min(1, 'Offering year group is required'),
+  offeringZoomLink: z.string().default(''),
 }).refine(
   (data) => data.priceId || (data.amount && data.description),
   { message: 'Either priceId or both amount and description are required' }
