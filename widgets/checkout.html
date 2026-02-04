@@ -57,30 +57,48 @@
 
   const params = new URLSearchParams(window.location.search);
   const bookingId = params.get('booking_id');
-  const email = params.get('email');
-  const name = params.get('name');
+  const parentName = params.get('parent_name');
+  const parentEmail = params.get('parent_email');
+  const parentPhone = params.get('parent_phone');
   const priceId = params.get('price_id');
-  const amount = parseInt(params.get('amount'), 10);
-  const subject = params.get('subject');
-  const date = params.get('date');
-  const time = params.get('time');
   const studentName = params.get('student_name');
+  const studentEmail = params.get('student_email');
+  const offeringName = params.get('offering_name');
+  const offeringSubject = params.get('offering_subject');
+  const offeringDate = params.get('offering_date');
+  const offeringTime = params.get('offering_time');
+  const offeringYearGroup = params.get('offering_year_group');
+  const offeringZoomLink = params.get('offering_zoom_link');
+  const offeringPrice = parseInt(params.get('offering_price'), 10);
 
-  if (!bookingId || !email || !name) {
+  if (!bookingId || !parentEmail || !parentName) {
     document.getElementById('wcGrid').innerHTML = '<div class="wc-missing"><h2>Missing Booking Details</h2><p>This page requires booking information. Please start from the booking form.</p></div>';
     return;
   }
 
-  document.getElementById('wcSubject').textContent = subject || '-';
-  document.getElementById('wcDate').textContent = date || '-';
-  document.getElementById('wcTime').textContent = time || '-';
+  document.getElementById('wcSubject').textContent = offeringSubject || '-';
+  document.getElementById('wcDate').textContent = offeringDate || '-';
+  document.getElementById('wcTime').textContent = offeringTime || '-';
   document.getElementById('wcStudent').textContent = studentName || '-';
-  document.getElementById('wcEmail').textContent = email || '-';
-  document.getElementById('wcAmount').textContent = amount ? `£${amount}` : '-';
+  document.getElementById('wcEmail').textContent = parentEmail || '-';
+  document.getElementById('wcAmount').textContent = offeringPrice ? `£${offeringPrice}` : '-';
 
-  const body = { bookingId, customerEmail: email, customerName: name };
+  const body = {
+    bookingId,
+    customerEmail: parentEmail,
+    customerName: parentName,
+    parentPhone: parentPhone || '',
+    studentName: studentName || '',
+    studentEmail: studentEmail || '',
+    offeringName: offeringName || '',
+    offeringSubject: offeringSubject || '',
+    offeringDate: offeringDate || '',
+    offeringTime: offeringTime || '',
+    offeringYearGroup: offeringYearGroup || '',
+    offeringZoomLink: offeringZoomLink || '',
+  };
   if (priceId) { body.priceId = priceId; }
-  else if (amount) { body.amount = amount * 100; body.description = `${subject || 'Workshop'} - ${date || ''} ${time || ''}`.trim(); }
+  else if (offeringPrice) { body.amount = offeringPrice * 100; body.description = `${offeringSubject || 'Workshop'} - ${offeringDate || ''} ${offeringTime || ''}`.trim(); }
 
   try {
     const res = await fetch(`${API}/api/checkout/session`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

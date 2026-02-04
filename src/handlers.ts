@@ -49,21 +49,29 @@ function buildCheckoutUrl(params: {
   parentName: string;
   parentPhone: string;
   studentName: string;
+  studentEmail: string;
+  offeringName: string;
   subject: string;
   workshopDate: string;
   sessionTime: string;
+  yearGroup: string;
+  zoomLink: string;
   price: number;
 }): string {
   const queryParams = new URLSearchParams({
     booking_id: params.bookingId,
-    email: params.parentEmail,
-    name: params.parentName,
-    phone: params.parentPhone,
+    parent_name: params.parentName,
+    parent_email: params.parentEmail,
+    parent_phone: params.parentPhone,
     student_name: params.studentName,
-    subject: params.subject,
-    date: params.workshopDate,
-    time: params.sessionTime,
-    amount: String(params.price),
+    student_email: params.studentEmail,
+    offering_name: params.offeringName,
+    offering_subject: params.subject,
+    offering_date: params.workshopDate,
+    offering_time: params.sessionTime,
+    offering_year_group: params.yearGroup,
+    offering_zoom_link: params.zoomLink,
+    offering_price: String(params.price),
   });
 
   return `${config.checkoutBaseUrl}?${queryParams.toString()}`;
@@ -158,9 +166,13 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
           parentName: `${parent.firstName} ${parent.lastName}`,
           parentPhone: parent.phone,
           studentName: `${student.firstName} ${student.lastName}`,
+          studentEmail: student.email,
+          offeringName: offering.offering,
           subject: offering.subject,
           workshopDate: offering.workshopDate,
           sessionTime: offering.sessionTime,
+          yearGroup: offering.yearGroup,
+          zoomLink: offering.zoomLink,
           price: offering.price,
         });
 
@@ -194,9 +206,13 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       parentName: `${parent.firstName} ${parent.lastName}`,
       parentPhone: parent.phone,
       studentName: `${student.firstName} ${student.lastName}`,
+      studentEmail: student.email,
+      offeringName: offering.offering,
       subject: offering.subject,
       workshopDate: offering.workshopDate,
       sessionTime: offering.sessionTime,
+      yearGroup: offering.yearGroup,
+      zoomLink: offering.zoomLink,
       price: offering.price,
     });
 
