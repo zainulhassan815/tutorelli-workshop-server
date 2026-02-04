@@ -1,7 +1,7 @@
 import { stripe } from './stripe-client';
 import { config } from './config';
 import { createCheckoutSessionSchema } from './validation';
-import { findBookingByBookingId, updateBookingPaymentStatus, triggerBookingWebhook } from './ghl';
+import { findBookingByBookingId, updateBookingPaymentStatus, triggerBookingWebhook, fetchOfferingById, getContactById } from './ghl';
 import { STRIPE_ERROR_CODES } from './types';
 import type { ApiResponse, CheckoutSessionResponse } from './types';
 
@@ -165,7 +165,28 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
 
         console.log(`Webhook: Booking ${bookingId} marked as paid`);
 
-        await triggerBookingWebhook(booking);
+        const [offering, parentContact, studentContact] = await Promise.all([
+          fetchOfferingById(booking.workshopOfferingId),
+          getContactById(booking.parentContactId),
+          getContactById(booking.studentContactId),
+        ]);
+
+        const paymentIntent = session.payment_intent;
+
+        await triggerBookingWebhook({
+          booking,
+          offering,
+          parent: parentContact,
+          student: studentContact,
+          payment: {
+            stripeSessionId: session.id,
+            stripePaymentIntentId: typeof paymentIntent === 'string' ? paymentIntent : paymentIntent?.id ?? null,
+            amountTotal: session.amount_total,
+            currency: session.currency,
+            customerEmail: session.customer_email,
+            customerName: session.metadata?.customerName ?? null,
+          },
+        });
         break;
       }
 

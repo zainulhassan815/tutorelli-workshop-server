@@ -184,3 +184,18 @@ export interface CheckoutSessionResponse {
 export interface PaymentStatusUpdate {
   paymentStatus: 'paid' | 'pending' | 'expired';
 }
+
+export interface BookingWebhookPayload {
+  booking: Booking;
+  offering: WorkshopOffering | null;
+  parent: Contact | null;
+  student: Contact | null;
+  payment: {
+    stripeSessionId: string;
+    stripePaymentIntentId: string | null;
+    amountTotal: number | null;
+    currency: string | null;
+    customerEmail: string | null;
+    customerName: string | null;
+  };
+}

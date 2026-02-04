@@ -6,6 +6,7 @@ import type {
   Booking,
   CustomField,
   PaymentStatusUpdate,
+  BookingWebhookPayload,
 } from './types';
 import { OFFERING_FIELDS, BOOKING_FIELDS, AVAILABILITY, CONTACT_CUSTOM_FIELDS } from './types';
 
@@ -314,7 +315,31 @@ export async function getOrCreateStudentContact(input: {
   };
 }
 
-export async function triggerBookingWebhook(booking: Booking): Promise<void> {
+export async function getContactById(contactId: string): Promise<Contact | null> {
+  try {
+    const response = await ghl.contacts.getContact(contactId, {
+      locationId: config.ghl.locationId,
+    });
+
+    const contact = response.contact as any;
+    if (!contact) return null;
+
+    return {
+      id: contact.id,
+      firstName: contact.firstName || '',
+      lastName: contact.lastName || '',
+      name: contact.name || '',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      tags: contact.tags || [],
+    };
+  } catch (error: any) {
+    if (error?.response?.status === 404) return null;
+    throw error;
+  }
+}
+
+export async function triggerBookingWebhook(payload: BookingWebhookPayload): Promise<void> {
   if (!config.ghl.bookingWebhookUrl) {
     return;
   }
@@ -323,10 +348,10 @@ export async function triggerBookingWebhook(booking: Booking): Promise<void> {
     await fetch(config.ghl.bookingWebhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(booking),
+      body: JSON.stringify(payload),
     });
-    console.log(`Triggered GHL workflow for booking ${booking.bookingId}`);
+    console.log(`Triggered GHL workflow for booking ${payload.booking.bookingId}`);
   } catch (error) {
-    console.error(`Failed to trigger GHL workflow for booking ${booking.bookingId}`, error);
+    console.error(`Failed to trigger GHL workflow for booking ${payload.booking.bookingId}`, error);
   }
 }
