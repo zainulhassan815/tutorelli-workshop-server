@@ -69,6 +69,7 @@
   const offeringDate = params.get('offering_date');
   const offeringTime = params.get('offering_time');
   const offeringYearGroup = params.get('offering_year_group');
+  const offeringId = params.get('offering_id');
   const offeringZoomLink = params.get('offering_zoom_link');
   const offeringPrice = parseInt(params.get('offering_price'), 10);
 
@@ -92,6 +93,7 @@
     parentPhone: parentPhone || '',
     studentName: studentName || '',
     studentEmail: studentEmail || '',
+    offeringId: offeringId || '',
     offeringName: offeringName || '',
     offeringSubject: offeringSubject || '',
     offeringDate: offeringDate || '',
