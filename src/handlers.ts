@@ -200,7 +200,21 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       parentContactId: parentContact.id,
       studentContactId: studentContact.id,
       workshopOfferingId: offeringId,
+      parentFirstName: parent.firstName,
+      parentLastName: parent.lastName,
+      parentEmail: parent.email,
+      parentPhone: parent.phone,
+      studentFirstName: student.firstName,
+      studentLastName: student.lastName,
+      studentYearGroup: offering.yearGroup,
+      yearGroup: offering.yearGroup,
+      subject: offering.subject,
+      workshopDate: offering.workshopDate,
+      sessionTime: offering.sessionTime,
+      zoomLink: offering.zoomLink,
+      offeringPrice: offering.price,
       pricePaid: offering.price,
+      currency: config.stripe.currency,
     });
 
     const checkoutUrl = buildCheckoutUrl({

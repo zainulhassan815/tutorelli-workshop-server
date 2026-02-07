@@ -51,8 +51,27 @@ function parseBookingFromRecord(record: { id: string; properties: Record<string,
     parentContactId: String(props[BOOKING_FIELDS.parentContactId] || ''),
     studentContactId: String(props[BOOKING_FIELDS.studentContactId] || ''),
     workshopOfferingId: String(props[BOOKING_FIELDS.workshopOfferingId] || ''),
-    paymentStatus: String(props[BOOKING_FIELDS.paymentStatus] || ''),
+    // Parent details
+    parentFirstName: String(props[BOOKING_FIELDS.parentFirstName] || ''),
+    parentLastName: String(props[BOOKING_FIELDS.parentLastName] || ''),
+    parentEmail: String(props[BOOKING_FIELDS.parentEmail] || ''),
+    parentPhone: String(props[BOOKING_FIELDS.parentPhone] || ''),
+    // Student details
+    studentFirstName: String(props[BOOKING_FIELDS.studentFirstName] || ''),
+    studentLastName: String(props[BOOKING_FIELDS.studentLastName] || ''),
+    studentYearGroup: String(props[BOOKING_FIELDS.studentYearGroup] || ''),
+    // Offering details
+    yearGroup: String(props[BOOKING_FIELDS.yearGroup] || ''),
+    subject: String(props[BOOKING_FIELDS.subject] || ''),
+    workshopDate: String(props[BOOKING_FIELDS.workshopDate] || ''),
+    sessionTime: String(props[BOOKING_FIELDS.sessionTime] || ''),
+    zoomLink: String(props[BOOKING_FIELDS.zoomLink] || ''),
+    offeringPrice: parsePrice(props[BOOKING_FIELDS.offeringPrice]),
+    // Payment
     pricePaid: parsePrice(props[BOOKING_FIELDS.pricePaid]),
+    currency: String(props[BOOKING_FIELDS.currency] || ''),
+    paymentReference: String(props[BOOKING_FIELDS.paymentReference] || ''),
+    paymentStatus: String(props[BOOKING_FIELDS.paymentStatus] || ''),
     webhookTriggered: String(props[BOOKING_FIELDS.webhookTriggered] || '') === 'true',
   };
 }
@@ -184,7 +203,7 @@ export async function findBookingByBookingId(bookingId: string): Promise<Booking
 
 export async function updateBooking(
   recordId: string,
-  update: { paymentStatus?: string; webhookTriggered?: boolean }
+  update: { paymentStatus?: string; webhookTriggered?: boolean; currency?: string; paymentReference?: string }
 ): Promise<void> {
   const properties: Record<string, unknown> = {};
 
@@ -193,6 +212,12 @@ export async function updateBooking(
   }
   if (update.webhookTriggered !== undefined) {
     properties[BOOKING_FIELDS.webhookTriggered] = update.webhookTriggered ? 'true' : 'false';
+  }
+  if (update.currency !== undefined) {
+    properties[BOOKING_FIELDS.currency] = update.currency;
+  }
+  if (update.paymentReference !== undefined) {
+    properties[BOOKING_FIELDS.paymentReference] = update.paymentReference;
   }
 
   await ghl.objects.updateObjectRecord(
@@ -217,7 +242,25 @@ export async function createBookingRecord(input: {
   parentContactId: string;
   studentContactId: string;
   workshopOfferingId: string;
+  // Parent details
+  parentFirstName: string;
+  parentLastName: string;
+  parentEmail: string;
+  parentPhone: string;
+  // Student details
+  studentFirstName: string;
+  studentLastName: string;
+  studentYearGroup: string;
+  // Offering details
+  yearGroup: string;
+  subject: string;
+  workshopDate: string;
+  sessionTime: string;
+  zoomLink: string;
+  offeringPrice: number;
+  // Payment
   pricePaid: number;
+  currency: string;
 }): Promise<{ recordId: string; bookingId: string }> {
   const bookingId = generateBookingId();
 
@@ -226,8 +269,26 @@ export async function createBookingRecord(input: {
     [BOOKING_FIELDS.parentContactId]: input.parentContactId,
     [BOOKING_FIELDS.studentContactId]: input.studentContactId,
     [BOOKING_FIELDS.workshopOfferingId]: input.workshopOfferingId,
-    [BOOKING_FIELDS.paymentStatus]: 'pending',
+    // Parent details
+    [BOOKING_FIELDS.parentFirstName]: input.parentFirstName,
+    [BOOKING_FIELDS.parentLastName]: input.parentLastName,
+    [BOOKING_FIELDS.parentEmail]: input.parentEmail,
+    [BOOKING_FIELDS.parentPhone]: input.parentPhone,
+    // Student details
+    [BOOKING_FIELDS.studentFirstName]: input.studentFirstName,
+    [BOOKING_FIELDS.studentLastName]: input.studentLastName,
+    [BOOKING_FIELDS.studentYearGroup]: input.studentYearGroup,
+    // Offering details
+    [BOOKING_FIELDS.yearGroup]: input.yearGroup,
+    [BOOKING_FIELDS.subject]: input.subject,
+    [BOOKING_FIELDS.workshopDate]: input.workshopDate,
+    [BOOKING_FIELDS.sessionTime]: input.sessionTime,
+    [BOOKING_FIELDS.zoomLink]: input.zoomLink,
+    [BOOKING_FIELDS.offeringPrice]: input.offeringPrice,
+    // Payment
     [BOOKING_FIELDS.pricePaid]: input.pricePaid,
+    [BOOKING_FIELDS.currency]: input.currency,
+    [BOOKING_FIELDS.paymentStatus]: 'pending',
   };
 
   const response = await ghl.objects.createObjectRecord(

@@ -176,16 +176,21 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
           break;
         }
 
+        const paymentIntent = session.payment_intent;
+
         // Mark as paid if not already (idempotent on retries)
         if (booking.paymentStatus !== 'paid') {
-          await updateBooking(booking.id, { paymentStatus: 'paid' });
+          await updateBooking(booking.id, {
+            paymentStatus: 'paid',
+            currency: session.currency || '',
+            paymentReference: typeof paymentIntent === 'string' ? paymentIntent : paymentIntent?.id ?? '',
+          });
           console.log(`Webhook: Booking ${bookingId} marked as paid`);
         }
 
         // Trigger GHL webhook — if this fails, the whole handler returns 500
         // so Stripe retries. The payment update above is skipped on retry
         // (already paid), but we reattempt the webhook since webhookTriggered is still false.
-        const paymentIntent = session.payment_intent;
 
         await triggerBookingWebhook({
           booking: {

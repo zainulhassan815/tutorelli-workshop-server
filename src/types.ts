@@ -51,8 +51,27 @@ export interface Booking {
   parentContactId: string;
   studentContactId: string;
   workshopOfferingId: string;
-  paymentStatus: string;
+  // Parent details (copied at booking time)
+  parentFirstName: string;
+  parentLastName: string;
+  parentEmail: string;
+  parentPhone: string;
+  // Student details (copied at booking time)
+  studentFirstName: string;
+  studentLastName: string;
+  studentYearGroup: string;
+  // Offering details (copied at booking time)
+  yearGroup: string;
+  subject: string;
+  workshopDate: string;
+  sessionTime: string;
+  zoomLink: string;
+  offeringPrice: number;
+  // Payment
   pricePaid: number;
+  currency: string;
+  paymentReference: string;
+  paymentStatus: string;
   webhookTriggered: boolean;
 }
 
@@ -132,8 +151,27 @@ export const BOOKING_FIELDS = {
   parentContactId: 'parent_contact_id',
   studentContactId: 'student_contact_id',
   workshopOfferingId: 'workshop_offering_id',
-  paymentStatus: 'payment_status',
+  // Parent details
+  parentFirstName: 'parent_first_name',
+  parentLastName: 'parent_last_name',
+  parentEmail: 'parent_email',
+  parentPhone: 'parent_phone',
+  // Student details
+  studentFirstName: 'student_first_name',
+  studentLastName: 'student_last_name',
+  studentYearGroup: 'student_year_group',
+  // Offering details
+  yearGroup: 'year_group',
+  subject: 'subject',
+  workshopDate: 'workshop_date',
+  sessionTime: 'session_time',
+  zoomLink: 'zoom_link',
+  offeringPrice: 'offering_price',
+  // Payment
   pricePaid: 'price',
+  currency: 'currency',
+  paymentReference: 'payment_reference',
+  paymentStatus: 'payment_status',
   webhookTriggered: 'webhook_triggered',
 } as const;
 
