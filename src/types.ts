@@ -190,6 +190,7 @@ export interface BookingWebhookPayload {
     pricePaid: number;
   };
   offering: {
+    id: string;
     name: string;
     subject: string;
     workshopDate: string;

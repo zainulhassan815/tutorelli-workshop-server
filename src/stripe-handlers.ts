@@ -33,7 +33,7 @@ export async function handleCreateCheckoutSession(request: Request): Promise<Res
     const {
       bookingId, customerEmail, customerName, priceId, amount, description,
       parentPhone, studentName, studentEmail,
-      offeringName, offeringSubject, offeringDate, offeringTime, offeringYearGroup, offeringZoomLink,
+      offeringId, offeringName, offeringSubject, offeringDate, offeringTime, offeringYearGroup, offeringZoomLink,
     } = result.data;
 
     const lineItems = priceId
@@ -64,6 +64,7 @@ export async function handleCreateCheckoutSession(request: Request): Promise<Res
         parentPhone,
         studentName,
         studentEmail,
+        offeringId,
         offeringName,
         offeringSubject,
         offeringDate,
@@ -193,6 +194,7 @@ export async function handleStripeWebhook(request: Request): Promise<Response> {
             pricePaid: booking.pricePaid,
           },
           offering: {
+            id: meta.offeringId || '',
             name: meta.offeringName || '',
             subject: meta.offeringSubject || '',
             workshopDate: meta.offeringDate || '',

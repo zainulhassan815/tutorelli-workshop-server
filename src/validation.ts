@@ -67,6 +67,7 @@ export const createCheckoutSessionSchema = z.object({
   parentPhone: z.string().min(1, 'Parent phone is required'),
   studentName: z.string().min(1, 'Student name is required'),
   studentEmail: z.string().email('Invalid student email format'),
+  offeringId: z.string().min(1, 'Offering ID is required'),
   offeringName: z.string().min(1, 'Offering name is required'),
   offeringSubject: z.string().min(1, 'Offering subject is required'),
   offeringDate: z.string().min(1, 'Offering date is required'),

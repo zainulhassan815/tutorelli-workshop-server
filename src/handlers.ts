@@ -50,6 +50,7 @@ function buildCheckoutUrl(params: {
   parentPhone: string;
   studentName: string;
   studentEmail: string;
+  offeringId: string;
   offeringName: string;
   subject: string;
   workshopDate: string;
@@ -65,6 +66,7 @@ function buildCheckoutUrl(params: {
     parent_phone: params.parentPhone,
     student_name: params.studentName,
     student_email: params.studentEmail,
+    offering_id: params.offeringId,
     offering_name: params.offeringName,
     offering_subject: params.subject,
     offering_date: params.workshopDate,
@@ -167,6 +169,7 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
           parentPhone: parent.phone,
           studentName: `${student.firstName} ${student.lastName}`,
           studentEmail: student.email,
+          offeringId,
           offeringName: offering.offering,
           subject: offering.subject,
           workshopDate: offering.workshopDate,
@@ -207,6 +210,7 @@ export async function handleCreateBooking(request: Request): Promise<Response> {
       parentPhone: parent.phone,
       studentName: `${student.firstName} ${student.lastName}`,
       studentEmail: student.email,
+      offeringId,
       offeringName: offering.offering,
       subject: offering.subject,
       workshopDate: offering.workshopDate,
